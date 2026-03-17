@@ -2,6 +2,8 @@
 #include <cmath>
 #include "camera/camera.h"
 #include "room/room.h"
+#include "objects/objects.h"
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
@@ -21,6 +23,9 @@ void display() {
 
     drawRoom();
     drawDoor();
+    drawTable();
+    drawKey();
+    drawChest();
 
     glutSwapBuffers();
 }

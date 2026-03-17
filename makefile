@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -Wall
 LIBS = -lGL -lGLU -lglut
 
-SRCS = main.cpp room/room.cpp camera/camera.cpp utils/utils.cpp
+SRCS = main.cpp room/room.cpp camera/camera.cpp utils/utils.cpp objects/objects.cpp
 
 all:
 	$(CXX) $(CXXFLAGS) $(SRCS) -o escape_room $(LIBS)
