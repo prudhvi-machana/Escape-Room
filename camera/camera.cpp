@@ -2,94 +2,128 @@
 #include <cmath>
 #include "camera.h"
 
+// --- Constants ---
+static const float PI          = 3.14159265f;
+static const float DEG2RAD     = PI / 180.0f;
+static const float MOVE_SPEED  = 0.15f;
+static const float LOOK_SENS   = 0.15f;
+static const float PITCH_LIMIT = 89.0f;   // avoid gimbal flip at ±90
+
 float camX = 0.0f, camY = 1.0f, camZ = 5.0f;
-float angleY = 0.0f;
-float angleX = 0.0f;
-int winW = 900, winH = 600;
-bool warping = false;
+float angleY = 0.0f;   // yaw
+float angleX = 0.0f;   // pitch
+int   winW = 900, winH = 600;
+bool  warping      = false;
+bool  mouseCaptured = true;   // NEW: toggle with Tab
 
+// --- Helpers ---
+// Returns the flat (XZ) forward vector from current yaw
+inline void forwardXZ(float& fx, float& fz) {
+    fx =  sinf(angleY * DEG2RAD);
+    fz = -cosf(angleY * DEG2RAD);
+}
+
+// Full 3-D forward vector, respects pitch
+inline void forward3D(float& fx, float& fy, float& fz) {
+    float cosP = cosf(angleX * DEG2RAD);
+    fx =  sinf(angleY * DEG2RAD) * cosP;
+    fy = -sinf(angleX * DEG2RAD);          // pitch up = negative angleX
+    fz = -cosf(angleY * DEG2RAD) * cosP;
+}
+
+// Right vector (always horizontal — avoids roll on strafing)
+inline void rightXZ(float& rx, float& rz) {
+    rx =  cosf(angleY * DEG2RAD);
+    rz =  sinf(angleY * DEG2RAD);
+}
+
+void clampPitch() {
+    if (angleX < -PITCH_LIMIT) angleX = -PITCH_LIMIT;
+    if (angleX >  PITCH_LIMIT) angleX =  PITCH_LIMIT;
+}
+
+// --- Input ---
 void keyboard(unsigned char key, int x, int y) {
-    float speed = 0.3f;
-    float radY  = angleY * 3.14159f / 180.0f;
+    float fx, fy, fz, rx, rz;
+    forward3D(fx, fy, fz);   // pitch-aware forward for W/S
+    rightXZ(rx, rz);
 
-    switch(key) {
+    switch (key) {
+        // --- Movement ---
         case 'w': case 'W':
-            camX += sin(radY) * speed;
-            camZ -= cos(radY) * speed;
+            camX += fx * MOVE_SPEED;
+            camY += fy * MOVE_SPEED;   // FIX: honour pitch while walking
+            camZ += fz * MOVE_SPEED;
             break;
         case 's': case 'S':
-            camX -= sin(radY) * speed;
-            camZ += cos(radY) * speed;
+            camX -= fx * MOVE_SPEED;
+            camY -= fy * MOVE_SPEED;
+            camZ -= fz * MOVE_SPEED;
             break;
         case 'a': case 'A':
-            camX -= cos(radY) * speed;
-            camZ -= sin(radY) * speed;
+            camX -= rx * MOVE_SPEED;
+            camZ -= rz * MOVE_SPEED;   // FIX: correct right-vector strafe
             break;
         case 'd': case 'D':
-            camX += cos(radY) * speed;
-            camZ += sin(radY) * speed;
+            camX += rx * MOVE_SPEED;
+            camZ += rz * MOVE_SPEED;
             break;
-        case 27:
-            exit(0);
+
+        // --- Vertical (world-space, independent of look) ---
+        case ' ':
+            camY += MOVE_SPEED; break;
+        case 'c': case 'C':
+            camY -= MOVE_SPEED; break;
+
+        // --- NEW: toggle mouse capture with Tab ---
+        case '\t':
+            mouseCaptured = !mouseCaptured;
+            glutSetCursor(mouseCaptured ? GLUT_CURSOR_NONE : GLUT_CURSOR_INHERIT);
+            break;
+
+        case 27: exit(0);
     }
     glutPostRedisplay();
 }
 
 void specialKeys(int key, int x, int y) {
-    switch(key) {
-        case GLUT_KEY_LEFT:
-            angleY -= 5.0f; break;
-        case GLUT_KEY_RIGHT:
-            angleY += 5.0f; break;
-        case GLUT_KEY_UP:
-            angleX -= 3.0f;
-            if(angleX < -60.0f) angleX = -60.0f;
-            break;
-        case GLUT_KEY_DOWN:
-            angleX += 3.0f;
-            if(angleX > 60.0f) angleX = 60.0f;
-            break;
+    switch (key) {
+        case GLUT_KEY_LEFT:  angleY -= 5.0f; break;
+        case GLUT_KEY_RIGHT: angleY += 5.0f; break;
+        case GLUT_KEY_UP:    angleX -= 3.0f; clampPitch(); break;
+        case GLUT_KEY_DOWN:  angleX += 3.0f; clampPitch(); break;
     }
     glutPostRedisplay();
 }
 
 void mouseMotion(int x, int y) {
-    if(warping) {
-        warping = false;
-        return;
-    }
+    if (!mouseCaptured) return;   // NEW: do nothing when unlocked
+    if (warping) { warping = false; return; }
 
-    int centerX = winW / 2;
-    int centerY = winH / 2;
-    int dx = x - centerX;
-    int dy = y - centerY;
+    int cx = winW / 2, cy = winH / 2;
+    int dx = x - cx,   dy = y - cy;
+    if (dx == 0 && dy == 0) return;
 
-    if(dx == 0 && dy == 0) return;
-
-    float sensitivity = 0.15f;
-    angleY += dx * sensitivity;
-    angleX += dy * sensitivity;
-
-    if(angleX < -60.0f) angleX = -60.0f;
-    if(angleX >  60.0f) angleX =  60.0f;
+    angleY += dx * LOOK_SENS;
+    angleX += dy * LOOK_SENS;
+    clampPitch();
 
     warping = true;
-    glutWarpPointer(centerX, centerY);
+    glutWarpPointer(cx, cy);
     glutPostRedisplay();
 }
 
 void mouseButton(int button, int state, int x, int y) {
-    float speed = 0.5f;
-    float radY  = angleY * 3.14159f / 180.0f;
+    if (state != GLUT_DOWN) return;
 
-    if(button == 3 && state == GLUT_DOWN) {
-        camX += sin(radY) * speed;
-        camZ -= cos(radY) * speed;
-        glutPostRedisplay();
+    // NEW: left-click re-captures mouse if it was released
+    if (button == GLUT_LEFT_BUTTON && !mouseCaptured) {
+        mouseCaptured = true;
+        glutSetCursor(GLUT_CURSOR_NONE);
+        return;
     }
-    if(button == 4 && state == GLUT_DOWN) {
-        camX -= sin(radY) * speed;
-        camZ += cos(radY) * speed;
-        glutPostRedisplay();
-    }
+
+    // Scroll = vertical only (less disorienting than moving forward)
+    if (button == 3) { camY += 0.5f; glutPostRedisplay(); }
+    if (button == 4) { camY -= 0.5f; glutPostRedisplay(); }
 }

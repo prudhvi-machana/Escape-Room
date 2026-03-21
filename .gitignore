@@ -1,0 +1,19 @@
+# Compiled output
+escape_room
+*.o
+*.a
+*.so
+
+# Build artifacts
+build/
+bin/
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
