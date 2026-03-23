@@ -76,28 +76,9 @@ void keyboard(unsigned char key, int x, int y) {
             int idx = getNearbyItem(camX, camY, camZ);
             if (idx >= 0) {
                 Item& item = worldItems[idx];
-
-                if (item.name == "Key") {
-                    inventory.push_back(item.name);
+                setHudMessage(item.interactText, 4.0f);
+                if (item.consumeOnUse) {
                     item.pickedUp = true;
-                    setHudMessage("Picked up: Key");
-
-                } else if (item.name == "Chest") {
-                    if (hasInInventory("Key")) {
-                        item.pickedUp = true;
-                        setHudMessage("Chest opened! Something inside...");
-                    } else {
-                        setHudMessage("The chest is locked. Find the key first.");
-                    }
-
-                } else if (item.name == "Door") {
-                    if (hasInInventory("Key")) {
-                        item.pickedUp = true;
-                        setHudMessage("You escaped! Press ESC to quit.", 9999.0f);
-                        printf("\n Congratulations! You escaped the room!\n");
-                    } else {
-                        setHudMessage("The door is locked. You need a key.");
-                    }
                 }
             }
             break;

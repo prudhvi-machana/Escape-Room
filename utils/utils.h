@@ -8,9 +8,16 @@ struct Item {
     float x, y, z;
     float pickupRadius;
     bool  pickedUp;
+    std::string action;
+    std::string interactText;
+    bool consumeOnUse;
 
-    Item(std::string n, float x, float y, float z, float r = 1.0f)
-        : name(n), x(x), y(y), z(z), pickupRadius(r), pickedUp(false) {}
+    Item(std::string n, float x, float y, float z, float r = 1.0f,
+         std::string action = "inspect",
+         std::string interactText = "",
+         bool consumeOnUse = false)
+        : name(n), x(x), y(y), z(z), pickupRadius(r), pickedUp(false),
+          action(action), interactText(interactText), consumeOnUse(consumeOnUse) {}
 };
 
 // --- Globals ---
