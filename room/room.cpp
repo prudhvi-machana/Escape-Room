@@ -5,7 +5,7 @@
 
 void initRoom() {
     //          name      X      Y      Z     radius
-    worldItems.push_back(Item("Key",   0.0f,  1.35f,  0.0f,  1.2f));  // on table
+    worldItems.push_back(Item("Key",  -3.0f,  1.35f, -3.35f,  1.2f));  // on study table
     worldItems.push_back(Item("Chest", -3.75f, 0.4f,  4.0f,  1.5f));  // corner
     worldItems.push_back(Item("Door",   0.0f,  1.25f, 5.0f,  2.0f));  // front wall
 }

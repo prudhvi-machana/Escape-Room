@@ -28,6 +28,9 @@ void display() {
     drawRoom();
     drawDoor();
     drawTable();
+    drawChair();
+    drawDustbin();
+    drawBookshelf();
     drawKey();
     drawChest();
 
