@@ -1,37 +1,35 @@
 #include <GL/glut.h>
 #include <cmath>
 #include "camera.h"
+#include "../utils/utils.h"   // ← add this for worldItems, inventory, etc.
 
 // --- Constants ---
 static const float PI          = 3.14159265f;
 static const float DEG2RAD     = PI / 180.0f;
 static const float MOVE_SPEED  = 0.15f;
 static const float LOOK_SENS   = 0.15f;
-static const float PITCH_LIMIT = 89.0f;   // avoid gimbal flip at ±90
+static const float PITCH_LIMIT = 89.0f;
 
 float camX = 0.0f, camY = 1.0f, camZ = 5.0f;
-float angleY = 0.0f;   // yaw
-float angleX = 0.0f;   // pitch
+float angleY = 0.0f;
+float angleX = 0.0f;
 int   winW = 900, winH = 600;
-bool  warping      = false;
-bool  mouseCaptured = true;   // NEW: toggle with Tab
+bool  warping       = false;
+bool  mouseCaptured = true;
 
 // --- Helpers ---
-// Returns the flat (XZ) forward vector from current yaw
 inline void forwardXZ(float& fx, float& fz) {
     fx =  sinf(angleY * DEG2RAD);
     fz = -cosf(angleY * DEG2RAD);
 }
 
-// Full 3-D forward vector, respects pitch
 inline void forward3D(float& fx, float& fy, float& fz) {
     float cosP = cosf(angleX * DEG2RAD);
     fx =  sinf(angleY * DEG2RAD) * cosP;
-    fy = -sinf(angleX * DEG2RAD);          // pitch up = negative angleX
+    fy = -sinf(angleX * DEG2RAD);
     fz = -cosf(angleY * DEG2RAD) * cosP;
 }
 
-// Right vector (always horizontal — avoids roll on strafing)
 inline void rightXZ(float& rx, float& rz) {
     rx =  cosf(angleY * DEG2RAD);
     rz =  sinf(angleY * DEG2RAD);
@@ -42,17 +40,17 @@ void clampPitch() {
     if (angleX >  PITCH_LIMIT) angleX =  PITCH_LIMIT;
 }
 
-// --- Input ---
+// --- Keyboard ---
 void keyboard(unsigned char key, int x, int y) {
     float fx, fy, fz, rx, rz;
-    forward3D(fx, fy, fz);   // pitch-aware forward for W/S
+    forward3D(fx, fy, fz);
     rightXZ(rx, rz);
 
     switch (key) {
         // --- Movement ---
         case 'w': case 'W':
             camX += fx * MOVE_SPEED;
-            camY += fy * MOVE_SPEED;   // FIX: honour pitch while walking
+            camY += fy * MOVE_SPEED;
             camZ += fz * MOVE_SPEED;
             break;
         case 's': case 'S':
@@ -62,20 +60,50 @@ void keyboard(unsigned char key, int x, int y) {
             break;
         case 'a': case 'A':
             camX -= rx * MOVE_SPEED;
-            camZ -= rz * MOVE_SPEED;   // FIX: correct right-vector strafe
+            camZ -= rz * MOVE_SPEED;
             break;
         case 'd': case 'D':
             camX += rx * MOVE_SPEED;
             camZ += rz * MOVE_SPEED;
             break;
-
-        // --- Vertical (world-space, independent of look) ---
         case ' ':
             camY += MOVE_SPEED; break;
         case 'c': case 'C':
             camY -= MOVE_SPEED; break;
 
-        // --- NEW: toggle mouse capture with Tab ---
+        // --- Interact ---
+        case 'e': case 'E': {
+            int idx = getNearbyItem(camX, camY, camZ);
+            if (idx >= 0) {
+                Item& item = worldItems[idx];
+
+                if (item.name == "Key") {
+                    inventory.push_back(item.name);
+                    item.pickedUp = true;
+                    setHudMessage("Picked up: Key");
+
+                } else if (item.name == "Chest") {
+                    if (hasInInventory("Key")) {
+                        item.pickedUp = true;
+                        setHudMessage("Chest opened! Something inside...");
+                    } else {
+                        setHudMessage("The chest is locked. Find the key first.");
+                    }
+
+                } else if (item.name == "Door") {
+                    if (hasInInventory("Key")) {
+                        item.pickedUp = true;
+                        setHudMessage("You escaped! Press ESC to quit.", 9999.0f);
+                        printf("\n Congratulations! You escaped the room!\n");
+                    } else {
+                        setHudMessage("The door is locked. You need a key.");
+                    }
+                }
+            }
+            break;
+        }
+
+        // --- Mouse toggle ---
         case '\t':
             mouseCaptured = !mouseCaptured;
             glutSetCursor(mouseCaptured ? GLUT_CURSOR_NONE : GLUT_CURSOR_INHERIT);
@@ -97,7 +125,7 @@ void specialKeys(int key, int x, int y) {
 }
 
 void mouseMotion(int x, int y) {
-    if (!mouseCaptured) return;   // NEW: do nothing when unlocked
+    if (!mouseCaptured) return;
     if (warping) { warping = false; return; }
 
     int cx = winW / 2, cy = winH / 2;
@@ -116,14 +144,12 @@ void mouseMotion(int x, int y) {
 void mouseButton(int button, int state, int x, int y) {
     if (state != GLUT_DOWN) return;
 
-    // NEW: left-click re-captures mouse if it was released
     if (button == GLUT_LEFT_BUTTON && !mouseCaptured) {
         mouseCaptured = true;
         glutSetCursor(GLUT_CURSOR_NONE);
         return;
     }
 
-    // Scroll = vertical only (less disorienting than moving forward)
     if (button == 3) { camY += 0.5f; glutPostRedisplay(); }
     if (button == 4) { camY -= 0.5f; glutPostRedisplay(); }
 }
