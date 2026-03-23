@@ -28,17 +28,16 @@ void display() {
     drawRoom();
     drawDoor();
     drawTable();
-    drawKey();
-    drawChest();
+    drawChair();
+    drawDustbin();
+    drawBookshelf();
 
     // Proximity prompt (only when no timed message is showing)
     if (hudMessageTimer <= 0.0f) {
         int nearby = getNearbyItem(camX, camY, camZ);
         if (nearby >= 0) {
             Item& item = worldItems[nearby];
-            std::string verb = (item.name == "Door" || item.name == "Chest")
-                               ? "open " : "pick up ";
-            hudMessage = "Press E to " + verb + item.name;
+            hudMessage = "Press E to " + item.action + " " + item.name;
         } else {
             hudMessage = "";
         }

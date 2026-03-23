@@ -2,7 +2,8 @@
 #define OBJECTS_H
 
 void drawTable();
-void drawKey();
-void drawChest();
+void drawChair();
+void drawDustbin();
+void drawBookshelf();
 
 #endif
