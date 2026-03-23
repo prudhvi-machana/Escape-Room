@@ -57,11 +57,9 @@ void drawDeskNote() {
 }
 
 void drawCrumpledPaper() {
-    // A few brighter paper clumps that rise above the rim so they are easy to spot.
-    drawBox(-1.38f, 0.36f, -4.30f, -1.21f, 0.56f, -4.12f, 0.92f, 0.90f, 0.84f);
-    drawBox(-1.25f, 0.42f, -4.21f, -1.07f, 0.64f, -4.02f, 0.86f, 0.84f, 0.78f);
-    drawBox(-1.43f, 0.48f, -4.17f, -1.28f, 0.71f, -4.01f, 0.96f, 0.94f, 0.88f);
-    drawBox(-1.16f, 0.50f, -4.28f, -0.99f, 0.74f, -4.10f, 0.90f, 0.88f, 0.82f);
+    drawBox(-1.34f, 0.28f, -4.28f, -1.16f, 0.44f, -4.10f, 0.86f, 0.84f, 0.78f);
+    drawBox(-1.28f, 0.39f, -4.20f, -1.09f, 0.52f, -4.03f, 0.80f, 0.78f, 0.70f);
+    drawBox(-1.41f, 0.38f, -4.24f, -1.24f, 0.50f, -4.08f, 0.90f, 0.88f, 0.84f);
 }
 
 } // namespace
@@ -103,60 +101,15 @@ void drawChair() {
 }
 
 void drawDustbin() {
-    // Open-top bin with a slightly tapered silhouette.
-    drawQuad(
-        -1.58f, 0.0f, -4.58f,
-        -0.92f, 0.0f, -4.58f,
-        -0.98f, 0.0f, -3.92f,
-        -1.52f, 0.0f, -3.92f,
-        0.16f, 0.18f, 0.22f
-    );
+    drawBox(-1.55f, 0.0f, -4.55f, -0.95f, 0.72f, -3.95f, 0.18f, 0.20f, 0.24f);
+    drawBox(-1.48f, 0.08f, -4.48f, -1.02f, 0.64f, -4.02f, 0.08f, 0.09f, 0.11f);
 
-    // Back wall
     drawQuad(
-        -1.55f, 0.0f, -4.55f,
-        -0.95f, 0.0f, -4.55f,
-        -1.02f, 0.88f, -4.48f,
-        -1.48f, 0.88f, -4.48f,
-        0.24f, 0.27f, 0.32f
-    );
-    // Left wall
-    drawQuad(
-        -1.55f, 0.0f, -4.55f,
-        -1.52f, 0.0f, -3.92f,
-        -1.45f, 0.82f, -4.00f,
-        -1.48f, 0.88f, -4.48f,
-        0.20f, 0.23f, 0.28f
-    );
-    // Right wall
-    drawQuad(
-        -0.98f, 0.0f, -3.92f,
-        -0.95f, 0.0f, -4.55f,
-        -1.02f, 0.88f, -4.48f,
-        -1.05f, 0.82f, -4.00f,
-        0.14f, 0.16f, 0.20f
-    );
-    // Front lip kept lower so the paper remains visible.
-    drawQuad(
-        -1.52f, 0.0f, -3.92f,
-        -0.98f, 0.0f, -3.92f,
-        -1.05f, 0.46f, -4.00f,
-        -1.45f, 0.46f, -4.00f,
-        0.19f, 0.21f, 0.25f
-    );
-
-    // Rim strips
-    drawBox(-1.50f, 0.84f, -4.51f, -1.00f, 0.90f, -4.43f, 0.34f, 0.38f, 0.45f);
-    drawBox(-1.50f, 0.76f, -4.05f, -1.42f, 0.82f, -4.45f, 0.30f, 0.34f, 0.40f);
-    drawBox(-1.08f, 0.76f, -4.05f, -1.00f, 0.82f, -4.45f, 0.30f, 0.34f, 0.40f);
-
-    // Dark inner cavity behind the visible paper.
-    drawQuad(
-        -1.42f, 0.18f, -4.42f,
-        -1.08f, 0.18f, -4.42f,
-        -1.10f, 0.70f, -4.36f,
-        -1.40f, 0.70f, -4.36f,
-        0.05f, 0.06f, 0.08f
+        -1.45f, 0.18f, -3.94f,
+        -1.05f, 0.18f, -3.94f,
+        -1.10f, 0.58f, -3.94f,
+        -1.40f, 0.58f, -3.94f,
+        0.04f, 0.05f, 0.06f
     );
 
     drawCrumpledPaper();
