@@ -1,7 +1,6 @@
 #include <GL/glut.h>
 #include <cmath>
 #include "camera.h"
-#include "../utils/utils.h"   // ← add this for worldItems, inventory, etc.
 
 // --- Constants ---
 static const float PI          = 3.14159265f;
@@ -70,19 +69,6 @@ void keyboard(unsigned char key, int x, int y) {
             camY += MOVE_SPEED; break;
         case 'c': case 'C':
             camY -= MOVE_SPEED; break;
-
-        // --- Interact ---
-        case 'e': case 'E': {
-            int idx = getNearbyItem(camX, camY, camZ);
-            if (idx >= 0) {
-                Item& item = worldItems[idx];
-                setHudMessage(item.interactText, 4.0f);
-                if (item.consumeOnUse) {
-                    item.pickedUp = true;
-                }
-            }
-            break;
-        }
 
         // --- Mouse toggle ---
         case '\t':

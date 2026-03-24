@@ -32,17 +32,6 @@ void display() {
     drawDustbin();
     drawBookshelf();
 
-    // Proximity prompt (only when no timed message is showing)
-    if (hudMessageTimer <= 0.0f) {
-        int nearby = getNearbyItem(camX, camY, camZ);
-        if (nearby >= 0) {
-            Item& item = worldItems[nearby];
-            hudMessage = "Press E to " + item.action + " " + item.name;
-        } else {
-            hudMessage = "";
-        }
-    }
-
     drawHUD(winW, winH);          // ← ADD (always last)
     glutSwapBuffers();
 }
