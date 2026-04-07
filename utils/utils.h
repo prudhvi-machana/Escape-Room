@@ -2,6 +2,20 @@
 #include <string>
 #include <vector>
 
+enum TextureId {
+    TEX_NONE = 0,
+    TEX_GENERIC,
+    TEX_PLASTER,
+    TEX_FLOOR,
+    TEX_WOOD,
+    TEX_WOOD_DARK,
+    TEX_METAL,
+    TEX_FABRIC,
+    TEX_PAPER,
+    TEX_PLASTIC,
+    TEX_BOOK
+};
+
 // --- Item ---
 struct Item {
     std::string name;
@@ -25,19 +39,26 @@ extern std::vector<Item>        worldItems;
 extern std::vector<std::string> inventory;
 extern std::string              hudMessage;
 extern float                    hudMessageTimer;
+extern bool                     roomLightOn;
+extern bool                     drawerOpen;
 
 // --- Drawing ---
+void initTextures();
 void drawQuad(
     float x1,float y1,float z1,
     float x2,float y2,float z2,
     float x3,float y3,float z3,
     float x4,float y4,float z4,
-    float r, float g, float b);
+    float r, float g, float b,
+    TextureId texture = TEX_GENERIC,
+    float textureScale = 1.0f);
+void applyMaterial(float r, float g, float b, float ambientBoost = 0.22f, float shininess = 24.0f);
 
 // --- Item helpers ---
 int   getNearbyItem(float camX, float camY, float camZ);
 Item* getItemByName(const std::string& name);
 bool  hasInInventory(const std::string& name);
+bool  interactWithNearbyItem(float camX, float camY, float camZ);
 
 // --- HUD ---
 void setHudMessage(const std::string& msg, float duration = 2.5f);

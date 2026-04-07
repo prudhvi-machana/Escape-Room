@@ -1,6 +1,7 @@
 #include <GL/glut.h>
 #include <cmath>
 #include "camera.h"
+#include "../utils/utils.h"
 
 // --- Constants ---
 static const float PI          = 3.14159265f;
@@ -69,6 +70,9 @@ void keyboard(unsigned char key, int x, int y) {
             camY += MOVE_SPEED; break;
         case 'c': case 'C':
             camY -= MOVE_SPEED; break;
+        case 'e': case 'E':
+            interactWithNearbyItem(camX, camY, camZ);
+            break;
 
         // --- Mouse toggle ---
         case '\t':
@@ -110,6 +114,12 @@ void mouseMotion(int x, int y) {
 
 void mouseButton(int button, int state, int x, int y) {
     if (state != GLUT_DOWN) return;
+
+    if (button == GLUT_LEFT_BUTTON && mouseCaptured) {
+        interactWithNearbyItem(camX, camY, camZ);
+        glutPostRedisplay();
+        return;
+    }
 
     if (button == GLUT_LEFT_BUTTON && !mouseCaptured) {
         mouseCaptured = true;
