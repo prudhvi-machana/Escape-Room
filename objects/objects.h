@@ -3,6 +3,7 @@
 
 void drawTable();
 void drawChair();
+void drawDustbin();
 void drawBookshelf();
 void drawBed();
 void drawPainting();
