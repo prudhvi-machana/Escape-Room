@@ -41,6 +41,10 @@ extern std::string              hudMessage;
 extern float                    hudMessageTimer;
 extern bool                     roomLightOn;
 extern bool                     drawerOpen;
+extern bool                     drawerBookOverlayActive;
+extern bool                     codeBoxOverlayActive;
+extern bool                     codeBoxUnlocked;
+extern std::string              codeBoxInput;
 
 // --- Drawing ---
 void initTextures();
@@ -59,6 +63,13 @@ int   getNearbyItem(float camX, float camY, float camZ);
 Item* getItemByName(const std::string& name);
 bool  hasInInventory(const std::string& name);
 bool  interactWithNearbyItem(float camX, float camY, float camZ);
+void  showDrawerBookOverlay();
+void  hideDrawerBookOverlay();
+bool  handleDrawerBookOverlayInput();
+void  showCodeBoxOverlay();
+void  hideCodeBoxOverlay();
+bool  handleCodeBoxKeypress(unsigned char key);
+bool  isAnyOverlayActive();
 
 // --- HUD ---
 void setHudMessage(const std::string& msg, float duration = 2.5f);

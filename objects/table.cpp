@@ -24,25 +24,24 @@ void drawDeskLamp() {
     glPopAttrib();
 }
 
-void drawDrawerNote() {
+void drawDrawerBook() {
     if (!drawerOpen) return;
 
     const float drawerOffset = 0.42f;
 
+    drawBox(-3.18f, 0.79f, -2.78f + drawerOffset,
+            -2.66f, 0.90f, -2.48f + drawerOffset,
+            0.38f, 0.12f, 0.08f, TEX_BOOK, 3.0f);
+    drawBox(-3.15f, 0.90f, -2.75f + drawerOffset,
+            -2.69f, 0.915f, -2.51f + drawerOffset,
+            0.86f, 0.82f, 0.74f, TEX_PAPER, 5.0f);
+
     glPushAttrib(GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
-    glColor3f(0.95f, 0.92f, 0.80f);
-    glBegin(GL_QUADS);
-        glVertex3f(-3.18f, 0.815f, -2.54f + drawerOffset);
-        glVertex3f(-2.64f, 0.815f, -2.54f + drawerOffset);
-        glVertex3f(-2.70f, 0.815f, -2.76f + drawerOffset);
-        glVertex3f(-3.12f, 0.815f, -2.76f + drawerOffset);
-    glEnd();
-    glColor3f(0.40f, 0.38f, 0.32f);
+    glColor3f(0.92f, 0.84f, 0.60f);
     glBegin(GL_LINES);
-        glVertex3f(-3.10f, 0.816f, -2.59f + drawerOffset); glVertex3f(-2.76f, 0.816f, -2.59f + drawerOffset);
-        glVertex3f(-3.08f, 0.816f, -2.65f + drawerOffset); glVertex3f(-2.79f, 0.816f, -2.65f + drawerOffset);
-        glVertex3f(-3.03f, 0.816f, -2.71f + drawerOffset); glVertex3f(-2.83f, 0.816f, -2.71f + drawerOffset);
+        glVertex3f(-3.10f, 0.916f, -2.70f + drawerOffset); glVertex3f(-2.75f, 0.916f, -2.70f + drawerOffset);
+        glVertex3f(-3.08f, 0.916f, -2.64f + drawerOffset); glVertex3f(-2.77f, 0.916f, -2.64f + drawerOffset);
     glEnd();
     glPopAttrib();
 }
@@ -79,7 +78,7 @@ void drawDeskDrawer() {
     );
     drawBox(-2.96f, 0.84f, zFront - 0.01f, -2.84f, 0.88f, zFront + 0.03f, 0.74f, 0.68f, 0.42f, TEX_METAL, 4.0f);
 
-    drawDrawerNote();
+    drawDrawerBook();
 }
 
 } // namespace

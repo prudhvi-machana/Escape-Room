@@ -84,6 +84,7 @@ void display() {
     drawDoor();
     drawTable();
     drawChair();
+    drawDustbin();
     drawBookshelf();
     drawBed();
     drawPainting();
