@@ -13,7 +13,11 @@ enum TextureId {
     TEX_FABRIC,
     TEX_PAPER,
     TEX_PLASTIC,
-    TEX_BOOK
+    TEX_BOOK,
+    TEX_WALLPAPER,
+    TEX_GRASS,
+    TEX_BRASS,
+    TEX_COUNT
 };
 
 // --- Item ---
@@ -44,6 +48,7 @@ extern bool                     drawerOpen;
 extern bool                     drawerBookOverlayActive;
 extern bool                     codeBoxOverlayActive;
 extern bool                     codeBoxUnlocked;
+extern float                    codeBoxOpenProgress;
 extern std::string              codeBoxInput;
 
 // --- Drawing ---

@@ -7,6 +7,16 @@
 
 namespace {
 
+constexpr float kChestMinX = 3.18f;
+constexpr float kChestMaxX = 4.58f;
+constexpr float kChestMinY = 0.05f;
+constexpr float kChestMaxY = 1.02f;
+constexpr float kChestMinZ = 0.92f;
+constexpr float kChestMaxZ = 2.28f;
+constexpr float kChestWall = 0.10f;
+constexpr float kRoomHalf = 5.0f;
+constexpr float kRoomHeight = 4.0f;
+
 void projectPointToFloorFromLight(
     float x, float y, float z,
     float lx, float ly, float lz,
@@ -140,69 +150,240 @@ void drawLightSwitch() {
     glPopAttrib();
 }
 
-void drawCodeBox() {
-    const float outerMinX = -4.42f;
-    const float outerMaxX = -3.30f;
-    const float outerMinY = 0.72f;
-    const float outerMaxY = 1.18f;
-    const float outerMinZ = 2.82f;
-    const float outerMaxZ = 3.66f;
+void drawRoomTrim() {
+    const float trimH = 0.14f;
+    const float crownY = 3.82f;
 
-    const float innerMinX = -4.23f;
-    const float innerMaxX = -3.49f;
-    const float innerMinY = 0.84f;
-    const float innerMaxY = 1.06f;
-    const float innerMinZ = 3.02f;
-    const float innerMaxZ = 3.40f;
+    drawBox(-kRoomHalf, 0.0f, -kRoomHalf, kRoomHalf, trimH, -kRoomHalf + 0.12f,
+            0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
+    drawBox(-kRoomHalf, 0.0f, kRoomHalf - 0.12f, kRoomHalf, trimH, kRoomHalf,
+            0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
+    drawBox(-kRoomHalf, 0.0f, -kRoomHalf, -kRoomHalf + 0.12f, trimH, kRoomHalf,
+            0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
+    drawBox(kRoomHalf - 0.12f, 0.0f, -kRoomHalf, kRoomHalf, trimH, kRoomHalf,
+            0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
 
-    drawBox(outerMinX, outerMinY, outerMinZ, outerMaxX, outerMaxY, outerMaxZ,
-            0.20f, 0.10f, 0.07f, TEX_WOOD_DARK, 3.2f);
+    drawBox(-kRoomHalf, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, -kRoomHalf + 0.18f,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+    drawBox(-kRoomHalf, crownY, kRoomHalf - 0.18f, kRoomHalf, kRoomHeight, kRoomHalf,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+    drawBox(-kRoomHalf, crownY, -kRoomHalf, -kRoomHalf + 0.18f, kRoomHeight, kRoomHalf,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+    drawBox(kRoomHalf - 0.18f, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, kRoomHalf,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+}
 
-    drawBox(outerMinX + 0.04f, outerMinY + 0.04f, outerMaxZ - 0.07f,
-            outerMaxX - 0.04f, outerMaxY - 0.10f, outerMaxZ + 0.01f,
-            0.14f, 0.12f, 0.10f, TEX_METAL, 4.0f);
-    drawBox(outerMaxX - 0.12f, 0.86f, outerMaxZ - 0.06f,
-            outerMaxX - 0.02f, 1.05f, outerMaxZ + 0.02f,
-            0.60f, 0.48f, 0.18f, TEX_METAL, 4.0f);
+void drawOutdoorScene() {
+    glPushAttrib(GL_ENABLE_BIT);
+    glDisable(GL_LIGHTING);
+    glColor3f(0.62f, 0.82f, 0.98f);
+    glBegin(GL_QUADS);
+        glVertex3f(-20.0f, 0.0f, 20.0f);
+        glVertex3f(20.0f, 0.0f, 20.0f);
+        glVertex3f(20.0f, 13.5f, 20.0f);
+        glVertex3f(-20.0f, 13.5f, 20.0f);
+    glEnd();
 
-    drawBox(outerMinX + 0.12f, outerMinY + 0.10f, outerMinZ + 0.14f,
-            innerMinX, innerMaxY, innerMaxZ + 0.02f,
-            0.08f, 0.04f, 0.02f, TEX_WOOD_DARK, 2.2f);
-    drawBox(innerMaxX, outerMinY + 0.10f, outerMinZ + 0.14f,
-            outerMaxX - 0.12f, innerMaxY, innerMaxZ + 0.02f,
-            0.08f, 0.04f, 0.02f, TEX_WOOD_DARK, 2.2f);
-    drawBox(innerMinX, outerMinY + 0.10f, outerMinZ + 0.14f,
-            innerMaxX, innerMaxY, innerMinZ,
-            0.08f, 0.04f, 0.02f, TEX_WOOD_DARK, 2.2f);
-    drawBox(innerMinX, outerMinY + 0.10f, innerMaxZ,
-            innerMaxX, innerMaxY, outerMaxZ - 0.18f,
-            0.08f, 0.04f, 0.02f, TEX_WOOD_DARK, 2.2f);
-    drawBox(innerMinX, outerMinY + 0.10f, innerMinZ,
-            innerMaxX, innerMinY + 0.03f, innerMaxZ,
-            0.16f, 0.05f, 0.03f, TEX_WOOD_DARK, 2.0f);
+    glColor3f(0.72f, 0.88f, 0.99f);
+    glBegin(GL_QUADS);
+        glVertex3f(-20.0f, 13.5f, 20.0f);
+        glVertex3f(20.0f, 13.5f, 20.0f);
+        glVertex3f(20.0f, 24.0f, 8.0f);
+        glVertex3f(-20.0f, 24.0f, 8.0f);
+    glEnd();
+    glPopAttrib();
 
     drawQuad(
-        innerMinX, innerMinY + 0.032f, innerMinZ,
-        innerMaxX, innerMinY + 0.032f, innerMinZ,
-        innerMaxX, innerMinY + 0.032f, innerMaxZ,
-        innerMinX, innerMinY + 0.032f, innerMaxZ,
-        0.10f, 0.05f, 0.03f, TEX_WOOD_DARK, 2.0f
+        -18.0f, -0.02f, 5.02f,   18.0f, -0.02f, 5.02f,
+         18.0f, -0.02f, 20.0f,  -18.0f, -0.02f, 20.0f,
+        0.48f, 0.66f, 0.34f, TEX_GRASS, 0.34f
     );
 
-    if (codeBoxUnlocked) {
-        glPushMatrix();
-            glTranslatef(outerMinX + 0.12f, outerMaxY - 0.02f, outerMinZ + 0.14f);
-            glRotatef(-108.0f, 1.0f, 0.0f, 0.0f);
-            drawBox(0.0f, -0.02f, 0.0f, 0.88f, 0.05f, 0.66f,
-                    0.62f, 0.22f, 0.14f, TEX_WOOD, 3.0f);
-            drawBox(0.05f, 0.00f, 0.05f, 0.83f, 0.02f, 0.61f,
-                    0.16f, 0.06f, 0.04f, TEX_WOOD_DARK, 2.6f);
-        glPopMatrix();
-    } else {
-        drawBox(outerMinX + 0.12f, outerMaxY - 0.06f, outerMinZ + 0.12f,
-                outerMaxX - 0.12f, outerMaxY, outerMaxZ - 0.12f,
-                0.62f, 0.22f, 0.14f, TEX_WOOD, 3.0f);
-    }
+    drawQuad(
+        -2.2f, -0.01f, 5.04f,   2.2f, -0.01f, 5.04f,
+         3.6f, -0.01f, 11.0f,  -3.6f, -0.01f, 11.0f,
+        0.38f, 0.31f, 0.23f, TEX_FLOOR, 0.45f
+    );
+
+    drawQuad(
+        -18.0f, 0.0f, 20.0f,   18.0f, 0.0f, 20.0f,
+         18.0f, 3.8f, 20.0f,  -18.0f, 3.8f, 20.0f,
+        0.24f, 0.34f, 0.18f, TEX_GRASS, 0.18f
+    );
+}
+
+void drawBrassKeyModel(float keyX, float keyY, float keyZ) {
+    const float shaftMinX = keyX - 0.24f;
+    const float shaftMaxX = keyX + 0.06f;
+    const float shaftMinY = keyY + 0.010f;
+    const float shaftMaxY = keyY + 0.040f;
+    const float shaftMinZ = keyZ - 0.018f;
+    const float shaftMaxZ = keyZ + 0.018f;
+
+    drawFloorShadowAABB(shaftMinX - 0.08f, keyX + 0.14f, keyZ - 0.10f, keyZ + 0.10f, keyY + 0.10f, 0.10f);
+
+    drawBox(shaftMinX, shaftMinY, shaftMinZ, shaftMaxX, shaftMaxY, shaftMaxZ,
+            0.93f, 0.74f, 0.23f, TEX_BRASS, 6.0f);
+
+    drawBox(keyX - 0.30f, keyY + 0.002f, keyZ - 0.038f, keyX - 0.19f, keyY + 0.052f, keyZ + 0.038f,
+            0.90f, 0.72f, 0.22f, TEX_BRASS, 5.5f);
+    drawBox(keyX - 0.275f, keyY + 0.013f, keyZ - 0.020f, keyX - 0.215f, keyY + 0.041f, keyZ + 0.020f,
+            0.22f, 0.17f, 0.10f, TEX_METAL, 4.0f);
+
+    drawBox(keyX + 0.02f, keyY + 0.000f, keyZ - 0.048f, keyX + 0.12f, keyY + 0.058f, keyZ + 0.048f,
+            0.92f, 0.74f, 0.24f, TEX_BRASS, 5.5f);
+    drawBox(keyX + 0.095f, keyY + 0.012f, keyZ - 0.024f, keyX + 0.15f, keyY + 0.046f, keyZ + 0.024f,
+            0.24f, 0.18f, 0.11f, TEX_METAL, 4.0f);
+
+    drawBox(keyX - 0.15f, keyY + 0.040f, keyZ - 0.060f, keyX - 0.10f, keyY + 0.082f, keyZ - 0.010f,
+            0.92f, 0.74f, 0.24f, TEX_BRASS, 6.0f);
+    drawBox(keyX - 0.06f, keyY + 0.040f, keyZ + 0.006f, keyX + 0.00f, keyY + 0.086f, keyZ + 0.068f,
+            0.92f, 0.74f, 0.24f, TEX_BRASS, 6.0f);
+    drawBox(keyX - 0.01f, keyY + 0.040f, keyZ + 0.022f, keyX + 0.05f, keyY + 0.073f, keyZ + 0.092f,
+            0.88f, 0.70f, 0.22f, TEX_BRASS, 6.0f);
+
+    drawBox(keyX - 0.15f, keyY + 0.008f, keyZ - 0.018f, keyX - 0.10f, keyY + 0.022f, keyZ + 0.018f,
+            0.70f, 0.56f, 0.20f, TEX_BRASS, 7.0f);
+    drawBox(keyX - 0.02f, keyY + 0.008f, keyZ - 0.018f, keyX + 0.02f, keyY + 0.022f, keyZ + 0.018f,
+            0.70f, 0.56f, 0.20f, TEX_BRASS, 7.0f);
+}
+
+void drawCodeBox() {
+    const float innerMinX = kChestMinX + kChestWall;
+    const float innerMaxX = kChestMaxX - kChestWall;
+    const float innerMinY = kChestMinY + kChestWall;
+    const float innerMaxY = kChestMaxY - 0.16f;
+    const float innerMinZ = kChestMinZ + kChestWall;
+    const float innerMaxZ = kChestMaxZ - kChestWall;
+    const float lidThickness = 0.10f;
+    const float bodyTopY = kChestMaxY - 0.08f;
+    const float bottomTopY = kChestMinY + 0.16f;
+    const float openEase = codeBoxOpenProgress * codeBoxOpenProgress * (3.0f - 2.0f * codeBoxOpenProgress);
+    const float settle = (1.0f - codeBoxOpenProgress) * std::sin(codeBoxOpenProgress * 7.2f) * 4.0f;
+    const float lidAngle = 112.0f * openEase + settle;
+
+    drawFloorShadowAABB(kChestMinX, kChestMaxX, kChestMinZ, kChestMaxZ, 1.70f, 0.24f);
+
+    drawBox(kChestMinX, kChestMinY, kChestMinZ, kChestMaxX, bottomTopY, kChestMaxZ,
+            0.30f, 0.18f, 0.08f, TEX_WOOD_DARK, 2.6f);
+
+    drawBox(kChestMinX + 0.04f, kChestMinY + 0.04f, kChestMinZ + 0.04f,
+            kChestMaxX - 0.04f, kChestMinY + 0.12f, kChestMaxZ - 0.04f,
+            0.46f, 0.28f, 0.14f, TEX_WOOD, 2.3f);
+
+    drawBox(kChestMinX, bottomTopY, kChestMinZ, innerMinX, bodyTopY, kChestMaxZ,
+            0.25f, 0.14f, 0.07f, TEX_WOOD_DARK, 2.5f);
+    drawBox(innerMaxX, bottomTopY, kChestMinZ, kChestMaxX, bodyTopY, kChestMaxZ,
+            0.25f, 0.14f, 0.07f, TEX_WOOD_DARK, 2.5f);
+    drawBox(innerMinX, bottomTopY, innerMaxZ, innerMaxX, bodyTopY, kChestMaxZ,
+            0.27f, 0.15f, 0.08f, TEX_WOOD_DARK, 2.7f);
+    drawBox(innerMinX, bottomTopY, kChestMinZ, innerMaxX, bodyTopY, innerMinZ,
+            0.30f, 0.18f, 0.09f, TEX_WOOD, 2.7f);
+
+    drawBox(kChestMinX + 0.10f, kChestMinY + 0.24f, kChestMinZ - 0.02f,
+            kChestMaxX - 0.10f, kChestMaxY - 0.14f, kChestMinZ + 0.08f,
+            0.22f, 0.18f, 0.12f, TEX_METAL, 4.0f);
+    drawBox(kChestMinX + 0.16f, kChestMinY + 0.28f, kChestMinZ - 0.03f,
+            kChestMaxX - 0.16f, kChestMinY + 0.52f, kChestMinZ + 0.02f,
+            0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+
+    drawBox(kChestMinX + 0.12f, kChestMinY + 0.16f, kChestMaxZ - 0.10f,
+            kChestMaxX - 0.12f, kChestMinY + 0.22f, kChestMaxZ + 0.01f,
+            0.58f, 0.37f, 0.18f, TEX_WOOD, 3.2f);
+
+    drawBox(kChestMinX + 0.08f, kChestMinY + 0.18f, kChestMinZ - 0.015f,
+            kChestMinX + 0.18f, bodyTopY + 0.02f, kChestMinZ + 0.04f,
+            0.82f, 0.66f, 0.22f, TEX_BRASS, 5.0f);
+    drawBox(kChestMaxX - 0.18f, kChestMinY + 0.18f, kChestMinZ - 0.015f,
+            kChestMaxX - 0.08f, bodyTopY + 0.02f, kChestMinZ + 0.04f,
+            0.82f, 0.66f, 0.22f, TEX_BRASS, 5.0f);
+    drawBox(kChestMinX + 0.12f, kChestMinY + 0.14f, kChestMaxZ - 0.02f,
+            kChestMaxX - 0.12f, kChestMinY + 0.22f, kChestMaxZ + 0.04f,
+            0.78f, 0.62f, 0.21f, TEX_BRASS, 5.0f);
+
+    drawQuad(
+        innerMinX, innerMinY + 0.02f, innerMinZ,
+        innerMaxX, innerMinY + 0.02f, innerMinZ,
+        innerMaxX, innerMinY + 0.02f, innerMaxZ,
+        innerMinX, innerMinY + 0.02f, innerMaxZ,
+        0.34f, 0.17f, 0.08f, TEX_WOOD, 3.0f
+    );
+    drawQuad(
+        innerMinX + 0.03f, innerMinY + 0.024f, innerMinZ + 0.03f,
+        innerMaxX - 0.03f, innerMinY + 0.024f, innerMinZ + 0.03f,
+        innerMaxX - 0.03f, innerMinY + 0.024f, innerMaxZ - 0.03f,
+        innerMinX + 0.03f, innerMinY + 0.024f, innerMaxZ - 0.03f,
+        0.40f, 0.17f, 0.13f, TEX_FABRIC, 4.0f
+    );
+
+    drawQuad(
+        innerMinX, innerMinY, innerMinZ,
+        innerMinX, innerMinY, innerMaxZ,
+        innerMinX, innerMaxY, innerMaxZ,
+        innerMinX, innerMaxY, innerMinZ,
+        0.13f, 0.07f, 0.05f, TEX_WOOD_DARK, 2.3f
+    );
+    drawQuad(
+        innerMaxX, innerMinY, innerMaxZ,
+        innerMaxX, innerMinY, innerMinZ,
+        innerMaxX, innerMaxY, innerMinZ,
+        innerMaxX, innerMaxY, innerMaxZ,
+        0.14f, 0.07f, 0.05f, TEX_WOOD_DARK, 2.3f
+    );
+    drawQuad(
+        innerMinX, innerMinY, innerMaxZ,
+        innerMaxX, innerMinY, innerMaxZ,
+        innerMaxX, innerMaxY, innerMaxZ,
+        innerMinX, innerMaxY, innerMaxZ,
+        0.15f, 0.08f, 0.05f, TEX_WOOD_DARK, 2.1f
+    );
+    drawQuad(
+        innerMaxX, innerMinY, innerMinZ,
+        innerMinX, innerMinY, innerMinZ,
+        innerMinX, innerMaxY, innerMinZ,
+        innerMaxX, innerMaxY, innerMinZ,
+        0.17f, 0.09f, 0.05f, TEX_WOOD_DARK, 2.1f
+    );
+
+    glPushMatrix();
+        glTranslatef(kChestMinX + 0.10f, bodyTopY, kChestMaxZ - 0.05f);
+        glRotatef(lidAngle, 1.0f, 0.0f, 0.0f);
+
+        drawBox(0.0f, -lidThickness * 0.5f, -(kChestMaxZ - kChestMinZ) + 0.12f,
+                kChestMaxX - kChestMinX - 0.20f, lidThickness * 0.5f, 0.02f,
+                0.48f, 0.28f, 0.14f, TEX_WOOD, 2.8f);
+        drawBox(0.06f, -lidThickness * 0.22f, -(kChestMaxZ - kChestMinZ) + 0.18f,
+                kChestMaxX - kChestMinX - 0.26f, -0.01f, -0.06f,
+                0.18f, 0.08f, 0.05f, TEX_WOOD_DARK, 2.2f);
+        drawBox(0.08f, -lidThickness * 0.18f, -(kChestMaxZ - kChestMinZ) + 0.22f,
+                kChestMaxX - kChestMinX - 0.28f, -0.04f, -0.10f,
+                0.52f, 0.20f, 0.16f, TEX_FABRIC, 4.0f);
+
+        drawBox(0.01f, -lidThickness * 0.48f, -0.04f,
+                0.10f, lidThickness * 0.34f, 0.03f,
+                0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+        drawBox(kChestMaxX - kChestMinX - 0.30f, -lidThickness * 0.48f, -0.04f,
+                kChestMaxX - kChestMinX - 0.21f, lidThickness * 0.34f, 0.03f,
+                0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+
+        drawBox(0.14f, -lidThickness * 0.52f, -(kChestMaxZ - kChestMinZ) + 0.07f,
+                kChestMaxX - kChestMinX - 0.34f, -lidThickness * 0.28f, -(kChestMaxZ - kChestMinZ) + 0.12f,
+                0.78f, 0.62f, 0.20f, TEX_BRASS, 5.0f);
+    glPopMatrix();
+
+    drawBox(kChestMinX + 0.18f, bodyTopY - 0.02f, kChestMaxZ - 0.04f,
+            kChestMinX + 0.30f, bodyTopY + 0.06f, kChestMaxZ + 0.03f,
+            0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+    drawBox(kChestMaxX - 0.30f, bodyTopY - 0.02f, kChestMaxZ - 0.04f,
+            kChestMaxX - 0.18f, bodyTopY + 0.06f, kChestMaxZ + 0.03f,
+            0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+
+    drawBox((kChestMinX + kChestMaxX) * 0.5f - 0.12f, kChestMinY + 0.25f, kChestMinZ - 0.032f,
+            (kChestMinX + kChestMaxX) * 0.5f + 0.12f, kChestMinY + 0.62f, kChestMinZ + 0.03f,
+            0.82f, 0.66f, 0.21f, TEX_BRASS, 5.0f);
+    drawBox((kChestMinX + kChestMaxX) * 0.5f - 0.04f, kChestMinY + 0.34f, kChestMinZ - 0.040f,
+            (kChestMinX + kChestMaxX) * 0.5f + 0.04f, kChestMinY + 0.45f, kChestMinZ + 0.035f,
+            0.16f, 0.16f, 0.16f, TEX_METAL, 5.0f);
 
     glPushAttrib(GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
@@ -210,30 +391,21 @@ void drawCodeBox() {
               codeBoxUnlocked ? 0.86f : 0.22f,
               codeBoxUnlocked ? 0.36f : 0.16f);
     glBegin(GL_QUADS);
-        glVertex3f(outerMaxX - 0.18f, 0.94f, outerMaxZ + 0.015f);
-        glVertex3f(outerMaxX - 0.12f, 0.94f, outerMaxZ + 0.015f);
-        glVertex3f(outerMaxX - 0.12f, 1.01f, outerMaxZ + 0.015f);
-        glVertex3f(outerMaxX - 0.18f, 1.01f, outerMaxZ + 0.015f);
+        glVertex3f(kChestMaxX - 0.26f, kChestMinY + 0.40f, kChestMinZ - 0.026f);
+        glVertex3f(kChestMaxX - 0.17f, kChestMinY + 0.40f, kChestMinZ - 0.026f);
+        glVertex3f(kChestMaxX - 0.17f, kChestMinY + 0.49f, kChestMinZ - 0.026f);
+        glVertex3f(kChestMaxX - 0.26f, kChestMinY + 0.49f, kChestMinZ - 0.026f);
     glEnd();
     glPopAttrib();
 
     if (codeBoxUnlocked && !hasInInventory("Brass Key")) {
-        drawBox(-4.10f, 0.89f, 3.16f, -3.80f, 0.92f, 3.21f,
-                0.84f, 0.68f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-3.82f, 0.90f, 3.155f, -3.73f, 0.94f, 3.215f,
-                0.82f, 0.66f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-3.80f, 0.905f, 3.170f, -3.75f, 0.93f, 3.200f,
-                0.18f, 0.12f, 0.07f, TEX_NONE, 1.0f);
-        drawBox(-4.02f, 0.92f, 3.13f, -3.98f, 0.95f, 3.16f,
-                0.82f, 0.66f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-4.08f, 0.92f, 3.205f, -4.03f, 0.95f, 3.255f,
-                0.80f, 0.64f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-4.15f, 0.92f, 3.205f, -4.10f, 0.95f, 3.280f,
-                0.80f, 0.64f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-4.18f, 0.885f, 3.155f, -4.10f, 0.925f, 3.215f,
-                0.82f, 0.66f, 0.18f, TEX_METAL, 5.0f);
-        drawBox(-4.165f, 0.895f, 3.170f, -4.115f, 0.915f, 3.200f,
-                0.18f, 0.12f, 0.07f, TEX_NONE, 1.0f);
+        const float reveal = openEase < 0.35f ? 0.0f : (openEase - 0.35f) / 0.65f;
+        const float bob = std::sin(glutGet(GLUT_ELAPSED_TIME) * 0.005f) * 0.01f * reveal;
+        const float keyY = innerMinY + 0.08f + bob;
+        const float keyX = (kChestMinX + kChestMaxX) * 0.5f + 0.04f;
+        const float keyZ = (kChestMinZ + kChestMaxZ) * 0.5f + 0.12f;
+
+        drawBrassKeyModel(keyX, keyY, keyZ);
     }
 }
 
@@ -243,6 +415,7 @@ void initRoom() {
     worldItems.clear();
     drawerOpen = false;
     codeBoxUnlocked = false;
+    codeBoxOpenProgress = 0.0f;
     codeBoxInput.clear();
 
     worldItems.push_back(Item(
@@ -276,58 +449,66 @@ void initRoom() {
         "The secret code to your destination is u4u03."
     ));
     worldItems.push_back(Item(
-        "Code Box", -3.88f, 0.98f, 3.60f, 1.5f,
+        "Code Box", 3.90f, 0.84f, 1.45f, 1.75f,
         "inspect",
-        "A locked box waits for a three-letter code."
+        "A large wooden chest waits for a three-letter code."
     ));
     worldItems.push_back(Item(
-        "Brass Key", -3.87f, 1.12f, 3.16f, 1.05f,
+        "Brass Key", 3.94f, 0.28f, 1.72f, 1.08f,
         "pickup",
         ""
     ));
 }
 
 void drawRoom() {
-    // Floor - dark grey
+    drawOutdoorScene();
+
     drawQuad(
         -5,0,-5,   5,0,-5,   5,0,5,   -5,0,5,
-        0.42f, 0.39f, 0.36f, TEX_FLOOR, 0.6f
+        0.44f, 0.41f, 0.38f, TEX_FLOOR, 0.48f
     );
-    // Ceiling - lighter grey
+
+    drawQuad(
+        -2.3f,0.012f,-3.8f,   3.2f,0.012f,-3.8f,   3.2f,0.012f,1.7f,   -2.3f,0.012f,1.7f,
+        0.58f, 0.18f, 0.12f, TEX_FABRIC, 0.48f
+    );
+
     drawQuad(
         -5,4,-5,   5,4,-5,   5,4,5,   -5,4,5,
-        0.76f, 0.73f, 0.68f, TEX_PLASTER, 0.7f
+        0.78f, 0.76f, 0.70f, TEX_PLASTER, 0.65f
     );
-    // Back wall - blue-grey
+
     drawQuad(
         -5,0,-5,   5,0,-5,   5,4,-5,   -5,4,-5,
-        0.58f, 0.60f, 0.72f, TEX_PLASTER, 0.8f
+        0.58f, 0.54f, 0.46f, TEX_WALLPAPER, 0.55f
     );
-    // Left wall - warm brown
+
     drawQuad(
         -5,0,-5,   -5,0,5,   -5,4,5,   -5,4,-5,
-        0.62f, 0.48f, 0.34f, TEX_PLASTER, 0.8f
+        0.56f, 0.50f, 0.42f, TEX_WALLPAPER, 0.55f
     );
-    // Right wall - warm brown
+
     drawQuad(
         5,0,-5,   5,0,5,   5,4,5,   5,4,-5,
-        0.62f, 0.48f, 0.34f, TEX_PLASTER, 0.8f
+        0.56f, 0.50f, 0.42f, TEX_WALLPAPER, 0.55f
     );
-    // Front wall left part
+
     drawQuad(
         -5,0,5,   -1,0,5,   -1,4,5,   -5,4,5,
-        0.58f, 0.60f, 0.72f, TEX_PLASTER, 0.8f
+        0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
-    // Front wall right part
+
     drawQuad(
         1,0,5,   5,0,5,   5,4,5,   1,4,5,
-        0.58f, 0.60f, 0.72f, TEX_PLASTER, 0.8f
+        0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
-    // Front wall top part (above door)
+
     drawQuad(
         -1,2.5,5,   1,2.5,5,   1,4,5,   -1,4,5,
-        0.58f, 0.60f, 0.72f, TEX_PLASTER, 0.8f
+        0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
+
+    drawRoomTrim();
 
     drawCeilingLightFixture();
     drawLightSwitch();
@@ -347,7 +528,7 @@ void drawDoor() {
         float brightness = isOpen ? 0.75f : 0.6f;
         drawQuad(
             -1,0,0,   1,0,0,   1,2.5,0,   -1,2.5,0,
-            brightness, 0.3f, 0.1f, TEX_WOOD_DARK, 0.7f
+            brightness, 0.36f, 0.12f, TEX_WOOD_DARK, 1.1f
         );
 
         float hr = isOpen ? 0.5f : 1.0f;
@@ -368,6 +549,9 @@ void drawDoor() {
             0.67f, 0.95f, 0.01f,
             0.2f, 0.2f, 0.2f, TEX_METAL, 4.0f
         );
+
+        drawBox(0.72f, 1.06f, -0.02f, 0.84f, 1.18f, 0.05f,
+                0.86f, 0.70f, 0.22f, TEX_BRASS, 5.0f);
 
     glPopMatrix();
 

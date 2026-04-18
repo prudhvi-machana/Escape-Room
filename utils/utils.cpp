@@ -17,11 +17,12 @@ bool                     drawerOpen = false;
 bool                     drawerBookOverlayActive = false;
 bool                     codeBoxOverlayActive = false;
 bool                     codeBoxUnlocked = false;
+float                    codeBoxOpenProgress = 0.0f;
 std::string              codeBoxInput = "";
 
 namespace {
 
-GLuint gTextures[11] = {};
+GLuint gTextures[TEX_COUNT] = {};
 
 const char* kDrawerBookOverlayLines[] = {
     "K eep    searching...",
@@ -42,30 +43,13 @@ void* kOverlayFont = GLUT_BITMAP_HELVETICA_18;
 
 LetterColor getLetterColor(char c) {
     if (!std::isalpha(static_cast<unsigned char>(c))) {
-        return {0.86f, 0.86f, 0.88f};
+        return {0.90f, 0.82f, 0.28f};
     }
 
-    const char upper = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-    if (upper == 'K' || upper == 'E' || upper == 'Y') {
-        return {0.98f, 0.80f, 0.24f};
+    if (c == 'K' || c == 'E' || c == 'Y') {
+        return {0.92f, 0.20f, 0.18f};
     }
-
-    static const LetterColor palette[] = {
-        {0.84f, 0.30f, 0.34f},
-        {0.25f, 0.72f, 0.88f},
-        {0.52f, 0.83f, 0.40f},
-        {0.80f, 0.42f, 0.86f},
-        {0.96f, 0.45f, 0.20f},
-        {0.36f, 0.90f, 0.82f},
-        {0.94f, 0.30f, 0.58f},
-        {0.58f, 0.66f, 0.98f},
-        {0.92f, 0.84f, 0.34f},
-        {0.44f, 0.76f, 0.42f},
-        {0.89f, 0.54f, 0.70f}
-    };
-
-    const unsigned int scrambled = (static_cast<unsigned int>(upper - 'A') * 7u + 3u) % (sizeof(palette) / sizeof(palette[0]));
-    return palette[scrambled];
+    return {0.95f, 0.84f, 0.26f};
 }
 
 int overlayTextWidth(const char* text) {
@@ -171,10 +155,10 @@ void drawCodeBoxOverlay(int winW, int winH) {
     glEnd();
 
     drawBitmapString(panelLeft + 28, panelTop - 36, GLUT_BITMAP_HELVETICA_18,
-                     "Lock Box", 0.95f, 0.92f, 0.82f);
+                     "Wooden Chest", 0.95f, 0.92f, 0.82f);
 
     const std::string statusText = codeBoxUnlocked
-        ? "Unlocked. The brass key is yours."
+        ? "Unlocked. The chest is opening."
         : "Enter the 3-letter code and press Enter.";
     drawBitmapString(panelLeft + 28, panelTop - 72, GLUT_BITMAP_HELVETICA_18,
                      statusText, 0.84f, 0.84f, 0.88f);
@@ -215,7 +199,7 @@ std::string getInteractionPrompt(float camX, float camY, float camZ) {
     const Item& item = worldItems[itemIndex];
     if (item.name == "Brass Key") return "Press E to collect the key";
     if (item.name == "Door") return "Press E to open the door";
-    if (item.name == "Code Box" && !codeBoxUnlocked) return "Press E to inspect the code box";
+    if (item.name == "Code Box" && !codeBoxUnlocked) return "Press E to inspect the chest";
     if (item.name == "Desk Drawer") return "Press E to use the drawer";
     if (item.name == "Drawer Book") return "Press E to read the book";
     return "";
@@ -277,42 +261,48 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
 
             switch (id) {
                 case TEX_PLASTER: {
-                    int base = 188 + (n0 % 28) - 14;
-                    int stain = ((x + y) % 17 == 0) ? -18 : 0;
-                    r = base + stain;
-                    g = base + 4 + stain;
-                    b = base + 18 + stain / 2;
+                    int cloud = static_cast<int>((0.5f + 0.5f * std::sin((fx * 4.0f + fy * 7.0f) * 3.14159f)) * 18.0f);
+                    int base = 194 + (n0 % 22) - 11 + cloud / 2;
+                    int stain = ((x + y) % 23 == 0) ? -12 : 0;
+                    int hairline = (std::abs(x - y) % 31 < 2) ? -10 : 0;
+                    r = base + stain + hairline;
+                    g = base + 2 + stain + hairline / 2;
+                    b = base + 10 + stain / 2;
                     break;
                 }
                 case TEX_FLOOR: {
-                    int board = (x / 10) % 2;
-                    int grain = (n1 % 36) - 18;
-                    int seam = (x % 10 == 0) ? -30 : 0;
-                    r = 95 + board * 10 + grain + seam;
-                    g = 78 + board * 8 + grain / 2 + seam;
-                    b = 58 + board * 4 + grain / 3 + seam;
+                    int tile = (((x / 9) + (y / 9)) % 2) * 8;
+                    int wear = (n1 % 28) - 14;
+                    int seam = (x % 9 == 0 || y % 9 == 0) ? -26 : 0;
+                    int sheen = static_cast<int>((0.5f + 0.5f * std::sin((fx * 10.0f + fy * 8.0f) * 3.14159f)) * 10.0f);
+                    r = 82 + tile + wear / 2 + seam + sheen;
+                    g = 74 + tile + wear / 3 + seam + sheen;
+                    b = 66 + tile + wear / 4 + seam / 2 + sheen;
                     break;
                 }
                 case TEX_WOOD: {
-                    int grain = static_cast<int>(std::sin((fx * 18.0f + fy * 3.5f) * 3.14159f) * 16.0f) + (n0 % 22) - 11;
-                    r = 132 + grain;
-                    g = 88 + grain / 2;
-                    b = 46 + grain / 3;
+                    int grain = static_cast<int>(std::sin((fx * 20.0f + fy * 4.0f) * 3.14159f) * 18.0f) + (n0 % 20) - 10;
+                    int ring = static_cast<int>(std::sin((fx * 4.0f + fy * 16.0f) * 3.14159f) * 8.0f);
+                    r = 138 + grain + ring / 2;
+                    g = 92 + grain / 2 + ring / 3;
+                    b = 48 + grain / 3;
                     break;
                 }
                 case TEX_WOOD_DARK: {
-                    int grain = static_cast<int>(std::sin((fx * 22.0f + fy * 4.0f) * 3.14159f) * 12.0f) + (n0 % 20) - 10;
-                    r = 84 + grain;
-                    g = 54 + grain / 2;
+                    int grain = static_cast<int>(std::sin((fx * 24.0f + fy * 5.0f) * 3.14159f) * 14.0f) + (n0 % 18) - 9;
+                    int ring = static_cast<int>(std::sin((fx * 3.0f + fy * 18.0f) * 3.14159f) * 6.0f);
+                    r = 78 + grain + ring / 2;
+                    g = 50 + grain / 2 + ring / 3;
                     b = 28 + grain / 3;
                     break;
                 }
                 case TEX_METAL: {
-                    int brushed = ((x * 5 + n1) % 30) - 15;
-                    int highlight = (y % 16 < 2) ? 16 : 0;
-                    r = 128 + brushed + highlight;
-                    g = 132 + brushed + highlight;
-                    b = 138 + brushed + highlight;
+                    int brushed = ((x * 6 + n1) % 34) - 17;
+                    int highlight = (y % 18 < 2) ? 18 : 0;
+                    int cool = static_cast<int>((0.5f + 0.5f * std::sin(fx * 20.0f * 3.14159f)) * 8.0f);
+                    r = 120 + brushed + highlight + cool / 2;
+                    g = 126 + brushed + highlight + cool / 2;
+                    b = 134 + brushed + highlight + cool;
                     break;
                 }
                 case TEX_FABRIC: {
@@ -352,6 +342,33 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
                     b = 48 + (n1 % 14) - 7;
                     break;
                 }
+                case TEX_WALLPAPER: {
+                    int motif = (std::abs((x % 20) - 10) + std::abs((y % 20) - 10) < 7) ? 16 : -4;
+                    int band = (y % 20 < 2) ? 10 : 0;
+                    int fade = (n0 % 16) - 8;
+                    r = 146 + motif + fade / 2 + band;
+                    g = 132 + motif / 2 + fade / 3 + band / 2;
+                    b = 108 + motif / 3 + fade / 4;
+                    break;
+                }
+                case TEX_GRASS: {
+                    int blade = static_cast<int>((0.5f + 0.5f * std::sin((fx * 28.0f + fy * 7.0f) * 3.14159f)) * 22.0f);
+                    int patch = (((x / 6) + (y / 6)) % 2) ? 10 : -8;
+                    int soil = (n1 % 19 == 0) ? -22 : 0;
+                    r = 42 + blade / 4 + patch / 3 + soil;
+                    g = 108 + blade + patch + soil / 2;
+                    b = 34 + blade / 5 + patch / 4;
+                    break;
+                }
+                case TEX_BRASS: {
+                    int brushed = ((x * 4 + y * 2 + n0) % 28) - 14;
+                    int gleam = (y % 15 < 2) ? 24 : 0;
+                    int tarnish = (n1 % 23 == 0) ? -18 : 0;
+                    r = 182 + brushed + gleam + tarnish;
+                    g = 138 + brushed / 2 + gleam / 2 + tarnish / 2;
+                    b = 56 + brushed / 3 + tarnish / 3;
+                    break;
+                }
                 case TEX_GENERIC:
                 default: {
                     int speck = (n0 % 30) - 15;
@@ -383,11 +400,11 @@ void bindTexture(TextureId texture) {
 
 // --- Drawing ---
 void initTextures() {
-    glGenTextures(11, gTextures);
+    glGenTextures(TEX_COUNT, gTextures);
     const int size = 64;
     unsigned char data[size * size * 3];
 
-    for (int texture = TEX_GENERIC; texture <= TEX_BOOK; ++texture) {
+    for (int texture = TEX_GENERIC; texture < TEX_COUNT; ++texture) {
         fillTexture(data, size, static_cast<TextureId>(texture));
         uploadTexture(static_cast<TextureId>(texture), data, size);
     }
@@ -471,7 +488,7 @@ int getNearbyItem(float camX, float camY, float camZ) {
     for (int i = 0; i < (int)worldItems.size(); i++) {
         if (worldItems[i].pickedUp) continue;
         if (worldItems[i].name == "Drawer Book" && !drawerOpen) continue;
-        if (worldItems[i].name == "Brass Key" && !codeBoxUnlocked) continue;
+        if (worldItems[i].name == "Brass Key" && (!codeBoxUnlocked || codeBoxOpenProgress < 0.72f)) continue;
 
         float dx = camX - worldItems[i].x;
         float dy = camY - worldItems[i].y;
@@ -568,11 +585,13 @@ bool interactWithNearbyItem(float camX, float camY, float camZ) {
         }
 
         item.pickedUp = true;
+        setHudMessage("The brass key turns. The door swings open.", 2.2f);
         return true;
     }
     if (item.name == "Brass Key") {
         item.pickedUp = true;
         inventory.push_back(item.name);
+        setHudMessage("You take the brass key from the chest.", 2.2f);
         return true;
     }
     if (item.action == "pickup") {
@@ -634,9 +653,10 @@ bool handleCodeBoxKeypress(unsigned char key) {
         if (codeBoxInput == "KEY") {
             codeBoxUnlocked = true;
             hideCodeBoxOverlay();
+            setHudMessage("The wooden chest unlocks with a heavy click.", 2.0f);
         } else {
             codeBoxInput.clear();
-            setHudMessage("The code box stays locked.", 1.8f);
+            setHudMessage("The wooden chest stays locked.", 1.8f);
         }
         return true;
     }
@@ -665,6 +685,16 @@ void setHudMessage(const std::string& msg, float duration) {
 }
 
 void updateHud(float deltaTime) {
+    const float targetOpen = codeBoxUnlocked ? 1.0f : 0.0f;
+    const float openSpeed = 1.35f;
+    if (codeBoxOpenProgress < targetOpen) {
+        codeBoxOpenProgress += deltaTime * openSpeed;
+        if (codeBoxOpenProgress > targetOpen) codeBoxOpenProgress = targetOpen;
+    } else if (codeBoxOpenProgress > targetOpen) {
+        codeBoxOpenProgress -= deltaTime * openSpeed;
+        if (codeBoxOpenProgress < targetOpen) codeBoxOpenProgress = targetOpen;
+    }
+
     if (hudMessageTimer > 0.0f) {
         hudMessageTimer -= deltaTime;
         if (hudMessageTimer < 0.0f) {

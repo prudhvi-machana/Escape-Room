@@ -19,20 +19,24 @@ bool  mouseCaptured = true;
 
 // --- Helpers ---
 void clampToRoom(float& x, float& y, float& z) {
-    if (x < -4.75f) x = -4.75f;
-    if (x >  4.75f) x =  4.75f;
     if (z < -4.75f) z = -4.75f;
 
     Item* door = getItemByName("Door");
     const bool doorOpen = door && door->pickedUp;
     if (!doorOpen) {
+        if (x < -4.75f) x = -4.75f;
+        if (x >  4.75f) x =  4.75f;
         if (z > 4.72f) z = 4.72f;
-    } else if (z > 4.72f) {
-        if (x < -1.0f || x > 1.0f) {
+    } else if (z <= 4.72f) {
+        if (x < -4.75f) x = -4.75f;
+        if (x >  4.75f) x =  4.75f;
+    } else {
+        if (z < 5.15f && (x < -1.0f || x > 1.0f)) {
             z = 4.72f;
-        } else if (z > 6.60f) {
-            z = 6.60f;
         }
+        if (x < -12.0f) x = -12.0f;
+        if (x >  12.0f) x =  12.0f;
+        if (z > 18.0f) z = 18.0f;
     }
 
     if (y < 0.35f) y = 0.35f;

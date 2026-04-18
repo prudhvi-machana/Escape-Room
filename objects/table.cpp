@@ -6,11 +6,11 @@
 namespace {
 
 void drawDeskLamp() {
-    drawBox(-2.98f, 1.20f, -3.35f, -2.74f, 1.24f, -3.12f, 0.14f, 0.14f, 0.16f);
-    drawBox(-2.90f, 1.24f, -3.26f, -2.84f, 1.49f, -3.20f, 0.18f, 0.18f, 0.20f);
-    drawBox(-2.90f, 1.49f, -3.24f, -2.70f, 1.54f, -3.18f, 0.18f, 0.18f, 0.20f);
+    drawBox(-2.98f, 1.20f, -3.35f, -2.74f, 1.24f, -3.12f, 0.16f, 0.16f, 0.18f, TEX_METAL, 3.6f);
+    drawBox(-2.90f, 1.24f, -3.26f, -2.84f, 1.49f, -3.20f, 0.18f, 0.18f, 0.20f, TEX_METAL, 4.0f);
+    drawBox(-2.90f, 1.49f, -3.24f, -2.70f, 1.54f, -3.18f, 0.18f, 0.18f, 0.20f, TEX_METAL, 4.0f);
 
-    drawBox(-2.72f, 1.48f, -3.36f, -2.58f, 1.60f, -3.14f, 0.22f, 0.22f, 0.24f);
+    drawBox(-2.72f, 1.48f, -3.36f, -2.58f, 1.60f, -3.14f, 0.22f, 0.22f, 0.24f, TEX_PLASTIC, 3.2f);
 
     glPushAttrib(GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
