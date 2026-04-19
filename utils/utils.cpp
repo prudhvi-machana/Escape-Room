@@ -246,6 +246,7 @@ void uploadTexture(TextureId id, unsigned char* data, int size) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, size, size, GL_RGB, GL_UNSIGNED_BYTE, data);
 }
 
@@ -257,57 +258,61 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
             const float fy = static_cast<float>(y) / static_cast<float>(size);
             const unsigned char n0 = hashNoise(x, y, static_cast<int>(id) * 11 + 3);
             const unsigned char n1 = hashNoise(x / 2, y / 2, static_cast<int>(id) * 17 + 7);
+            const unsigned char n2 = hashNoise(x / 4, y / 4, static_cast<int>(id) * 23 + 11);
+            const int soft0 = static_cast<int>(n0) - 128;
+            const int soft1 = static_cast<int>(n1) - 128;
+            const int soft2 = static_cast<int>(n2) - 128;
             int r = 170, g = 170, b = 170;
 
             switch (id) {
                 case TEX_PLASTER: {
-                    int cloud = static_cast<int>((0.5f + 0.5f * std::sin((fx * 4.0f + fy * 7.0f) * 3.14159f)) * 18.0f);
-                    int base = 194 + (n0 % 22) - 11 + cloud / 2;
-                    int stain = ((x + y) % 23 == 0) ? -12 : 0;
-                    int hairline = (std::abs(x - y) % 31 < 2) ? -10 : 0;
+                    int cloud = static_cast<int>((0.5f + 0.5f * std::sin((fx * 3.4f + fy * 5.8f) * 3.14159f)) * 14.0f);
+                    int base = 202 + soft0 / 24 + soft1 / 36 + cloud / 2;
+                    int stain = ((x + y) % 31 == 0) ? -7 : 0;
+                    int hairline = (std::abs(x - y) % 47 < 1) ? -5 : 0;
                     r = base + stain + hairline;
                     g = base + 2 + stain + hairline / 2;
                     b = base + 10 + stain / 2;
                     break;
                 }
                 case TEX_FLOOR: {
-                    int tile = (((x / 9) + (y / 9)) % 2) * 8;
-                    int wear = (n1 % 28) - 14;
-                    int seam = (x % 9 == 0 || y % 9 == 0) ? -26 : 0;
-                    int sheen = static_cast<int>((0.5f + 0.5f * std::sin((fx * 10.0f + fy * 8.0f) * 3.14159f)) * 10.0f);
+                    int tile = (((x / 12) + (y / 12)) % 2) * 6;
+                    int wear = soft1 / 10;
+                    int seam = (x % 12 == 0 || y % 12 == 0) ? -16 : 0;
+                    int sheen = static_cast<int>((0.5f + 0.5f * std::sin((fx * 8.0f + fy * 6.0f) * 3.14159f)) * 8.0f);
                     r = 82 + tile + wear / 2 + seam + sheen;
                     g = 74 + tile + wear / 3 + seam + sheen;
                     b = 66 + tile + wear / 4 + seam / 2 + sheen;
                     break;
                 }
                 case TEX_WOOD: {
-                    int grain = static_cast<int>(std::sin((fx * 20.0f + fy * 4.0f) * 3.14159f) * 18.0f) + (n0 % 20) - 10;
-                    int ring = static_cast<int>(std::sin((fx * 4.0f + fy * 16.0f) * 3.14159f) * 8.0f);
+                    int grain = static_cast<int>(std::sin((fx * 16.0f + fy * 3.0f) * 3.14159f) * 14.0f) + soft0 / 18;
+                    int ring = static_cast<int>(std::sin((fx * 3.0f + fy * 12.0f) * 3.14159f) * 6.0f) + soft2 / 40;
                     r = 138 + grain + ring / 2;
                     g = 92 + grain / 2 + ring / 3;
                     b = 48 + grain / 3;
                     break;
                 }
                 case TEX_WOOD_DARK: {
-                    int grain = static_cast<int>(std::sin((fx * 24.0f + fy * 5.0f) * 3.14159f) * 14.0f) + (n0 % 18) - 9;
-                    int ring = static_cast<int>(std::sin((fx * 3.0f + fy * 18.0f) * 3.14159f) * 6.0f);
+                    int grain = static_cast<int>(std::sin((fx * 18.0f + fy * 4.0f) * 3.14159f) * 11.0f) + soft0 / 20;
+                    int ring = static_cast<int>(std::sin((fx * 2.5f + fy * 14.0f) * 3.14159f) * 5.0f) + soft2 / 44;
                     r = 78 + grain + ring / 2;
                     g = 50 + grain / 2 + ring / 3;
                     b = 28 + grain / 3;
                     break;
                 }
                 case TEX_METAL: {
-                    int brushed = ((x * 6 + n1) % 34) - 17;
-                    int highlight = (y % 18 < 2) ? 18 : 0;
-                    int cool = static_cast<int>((0.5f + 0.5f * std::sin(fx * 20.0f * 3.14159f)) * 8.0f);
+                    int brushed = ((x * 4 + n1) % 26) - 13;
+                    int highlight = (y % 22 < 2) ? 14 : 0;
+                    int cool = static_cast<int>((0.5f + 0.5f * std::sin(fx * 16.0f * 3.14159f)) * 6.0f);
                     r = 120 + brushed + highlight + cool / 2;
                     g = 126 + brushed + highlight + cool / 2;
                     b = 134 + brushed + highlight + cool;
                     break;
                 }
                 case TEX_FABRIC: {
-                    int weave = ((x % 4 == 0) || (y % 4 == 0)) ? -20 : 0;
-                    int fuzz = (n0 % 20) - 10;
+                    int weave = ((x % 5 == 0) || (y % 5 == 0)) ? -12 : 0;
+                    int fuzz = soft0 / 18;
                     r = 118 + weave + fuzz;
                     g = 82 + weave + fuzz / 2;
                     b = 52 + weave / 2;
@@ -325,11 +330,11 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
                     break;
                 }
                 case TEX_PLASTIC: {
-                    int scuff = (n0 % 20) - 10;
+                    int scuff = soft0 / 18;
                     int grime = (y > size * 3 / 4) ? -14 : 0;
-                    int seam = (x % 16 < 2) ? 12 : 0;
-                    int gloss = static_cast<int>((0.5f + 0.5f * std::sin(fx * 10.0f * 3.14159f)) * 12.0f);
-                    int dents = ((x / 7 + y / 11) % 5 == 0) ? -8 : 0;
+                    int seam = (x % 20 < 2) ? 8 : 0;
+                    int gloss = static_cast<int>((0.5f + 0.5f * std::sin(fx * 8.0f * 3.14159f)) * 10.0f);
+                    int dents = ((x / 9 + y / 13) % 7 == 0) ? -5 : 0;
                     r = 74 + scuff / 2 + seam + gloss / 2 + grime + dents;
                     g = 84 + scuff / 2 + seam + gloss / 2 + grime + dents;
                     b = 92 + scuff + seam + gloss + grime + dents;
@@ -343,27 +348,27 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
                     break;
                 }
                 case TEX_WALLPAPER: {
-                    int motif = (std::abs((x % 20) - 10) + std::abs((y % 20) - 10) < 7) ? 16 : -4;
-                    int band = (y % 20 < 2) ? 10 : 0;
-                    int fade = (n0 % 16) - 8;
+                    int motif = (std::abs((x % 24) - 12) + std::abs((y % 24) - 12) < 8) ? 10 : -2;
+                    int band = (y % 24 < 2) ? 8 : 0;
+                    int fade = soft0 / 22;
                     r = 146 + motif + fade / 2 + band;
                     g = 132 + motif / 2 + fade / 3 + band / 2;
                     b = 108 + motif / 3 + fade / 4;
                     break;
                 }
                 case TEX_GRASS: {
-                    int blade = static_cast<int>((0.5f + 0.5f * std::sin((fx * 28.0f + fy * 7.0f) * 3.14159f)) * 22.0f);
-                    int patch = (((x / 6) + (y / 6)) % 2) ? 10 : -8;
-                    int soil = (n1 % 19 == 0) ? -22 : 0;
-                    r = 42 + blade / 4 + patch / 3 + soil;
-                    g = 108 + blade + patch + soil / 2;
-                    b = 34 + blade / 5 + patch / 4;
+                    int blade = static_cast<int>((0.5f + 0.5f * std::sin((fx * 18.0f + fy * 5.0f) * 3.14159f)) * 16.0f);
+                    int patch = static_cast<int>((0.5f + 0.5f * std::sin((fx * 3.5f + fy * 2.0f) * 3.14159f)) * 16.0f) - 8;
+                    int soil = (n2 % 31 == 0) ? -10 : 0;
+                    r = 50 + blade / 4 + patch / 3 + soil + soft1 / 48;
+                    g = 118 + blade + patch + soil / 2 + soft0 / 24;
+                    b = 40 + blade / 5 + patch / 4 + soft2 / 56;
                     break;
                 }
                 case TEX_BRASS: {
-                    int brushed = ((x * 4 + y * 2 + n0) % 28) - 14;
-                    int gleam = (y % 15 < 2) ? 24 : 0;
-                    int tarnish = (n1 % 23 == 0) ? -18 : 0;
+                    int brushed = ((x * 3 + y * 2 + n0) % 22) - 11;
+                    int gleam = (y % 18 < 2) ? 18 : 0;
+                    int tarnish = (n1 % 29 == 0) ? -12 : 0;
                     r = 182 + brushed + gleam + tarnish;
                     g = 138 + brushed / 2 + gleam / 2 + tarnish / 2;
                     b = 56 + brushed / 3 + tarnish / 3;
@@ -371,7 +376,7 @@ void fillTexture(unsigned char* data, int size, TextureId id) {
                 }
                 case TEX_GENERIC:
                 default: {
-                    int speck = (n0 % 30) - 15;
+                    int speck = soft0 / 12;
                     r = 148 + speck;
                     g = 138 + speck;
                     b = 126 + speck;
@@ -401,7 +406,7 @@ void bindTexture(TextureId texture) {
 // --- Drawing ---
 void initTextures() {
     glGenTextures(TEX_COUNT, gTextures);
-    const int size = 64;
+    const int size = 128;
     unsigned char data[size * size * 3];
 
     for (int texture = TEX_GENERIC; texture < TEX_COUNT; ++texture) {

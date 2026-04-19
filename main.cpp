@@ -123,6 +123,7 @@ int main(int argc, char** argv) {
     glEnable(GL_BLEND);                                    // ← ADD
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // ← ADD
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glClearColor(0.70f, 0.86f, 0.98f, 1.0f);
 
     initTextures();

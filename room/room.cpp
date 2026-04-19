@@ -16,6 +16,71 @@ constexpr float kChestMaxZ = 2.28f;
 constexpr float kChestWall = 0.10f;
 constexpr float kRoomHalf = 5.0f;
 constexpr float kRoomHeight = 4.0f;
+constexpr float kFrontWallInnerZ = 4.82f;
+constexpr float kFrontWallOuterZ = 5.0f;
+constexpr float kDoorFrameInnerZ = 4.86f;
+constexpr float kDoorFrameOuterZ = 4.96f;
+
+struct TreeMound {
+    float cx;
+    float baseY;
+    float peakY;
+    float hw;
+};
+
+void drawOutdoorTree(const TreeMound& tree, int variant) {
+    const float treeFrontZ = 19.72f;
+    const float trunkHalfW = tree.hw * 0.11f;
+    const float trunkHeight = tree.peakY * 0.26f;
+    const float trunkMinX = tree.cx - trunkHalfW;
+    const float trunkMaxX = tree.cx + trunkHalfW;
+
+    drawBox(
+        trunkMinX, tree.baseY, treeFrontZ + 0.02f,
+        trunkMaxX, tree.baseY + trunkHeight, treeFrontZ + 0.30f,
+        0.34f, 0.22f, 0.10f, TEX_WOOD_DARK, 1.8f
+    );
+
+    const float crownBaseY = tree.baseY + trunkHeight * 0.62f;
+    const float crownMidY = tree.baseY + tree.peakY * 0.56f;
+    const float crownTopY = tree.baseY + tree.peakY;
+
+    const float lowerInset = 0.78f + 0.03f * variant;
+    const float midInset = 0.52f + 0.02f * variant;
+    const float topInset = 0.22f + 0.02f * variant;
+
+    drawQuad(
+        tree.cx - tree.hw,                crownBaseY, treeFrontZ,
+        tree.cx + tree.hw,                crownBaseY, treeFrontZ,
+        tree.cx + tree.hw * lowerInset,   crownMidY,  treeFrontZ,
+        tree.cx - tree.hw * lowerInset,   crownMidY,  treeFrontZ,
+        0.20f, 0.38f, 0.14f, TEX_GRASS, 0.55f
+    );
+
+    drawQuad(
+        tree.cx - tree.hw * 0.78f,        crownMidY - 0.24f, treeFrontZ - 0.01f,
+        tree.cx + tree.hw * 0.78f,        crownMidY - 0.24f, treeFrontZ - 0.01f,
+        tree.cx + tree.hw * midInset,     crownTopY - 0.95f, treeFrontZ - 0.01f,
+        tree.cx - tree.hw * midInset,     crownTopY - 0.95f, treeFrontZ - 0.01f,
+        0.24f, 0.46f, 0.17f, TEX_GRASS, 0.62f
+    );
+
+    drawQuad(
+        tree.cx - tree.hw * 0.46f,        crownTopY - 1.42f, treeFrontZ - 0.02f,
+        tree.cx + tree.hw * 0.46f,        crownTopY - 1.42f, treeFrontZ - 0.02f,
+        tree.cx + tree.hw * topInset,     crownTopY,         treeFrontZ - 0.02f,
+        tree.cx - tree.hw * topInset,     crownTopY,         treeFrontZ - 0.02f,
+        0.29f, 0.54f, 0.19f, TEX_GRASS, 0.68f
+    );
+
+    drawQuad(
+        tree.cx - tree.hw * 0.34f,        crownMidY - 0.14f, treeFrontZ - 0.03f,
+        tree.cx + tree.hw * 0.10f,        crownMidY - 0.06f, treeFrontZ - 0.03f,
+        tree.cx + tree.hw * 0.18f,        crownTopY - 1.10f, treeFrontZ - 0.03f,
+        tree.cx - tree.hw * 0.26f,        crownTopY - 1.18f, treeFrontZ - 0.03f,
+        0.36f, 0.62f, 0.24f, TEX_GRASS, 0.74f
+    );
+}
 
 void projectPointToFloorFromLight(
     float x, float y, float z,
@@ -173,43 +238,150 @@ void drawRoomTrim() {
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 }
 
+// ---------------------------------------------------------------------------
+// Outdoor scene — sky gradient + layered grass
+// ---------------------------------------------------------------------------
 void drawOutdoorScene() {
-    glPushAttrib(GL_ENABLE_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
-    glColor3f(0.62f, 0.82f, 0.98f);
+    glDisable(GL_TEXTURE_2D);
+
+    // ── Sky: smooth vertical gradient via per-vertex colours ──────────────
+    // We draw a single quad covering the whole back wall area but use
+    // GL_SMOOTH shading so the top is deep blue and the bottom fades to a
+    // warm horizon haze.  Two quads let us add a subtle mid-tone band.
+
+    // Lower sky / horizon band  (warm pale blue-white)
     glBegin(GL_QUADS);
-        glVertex3f(-20.0f, 0.0f, 20.0f);
-        glVertex3f(20.0f, 0.0f, 20.0f);
-        glVertex3f(20.0f, 13.5f, 20.0f);
-        glVertex3f(-20.0f, 13.5f, 20.0f);
+        // bottom-left  (horizon)
+        glColor3f(0.82f, 0.91f, 0.98f);
+        glVertex3f(-22.0f, -0.5f, 20.0f);
+        // bottom-right (horizon)
+        glColor3f(0.82f, 0.91f, 0.98f);
+        glVertex3f( 22.0f, -0.5f, 20.0f);
+        // upper-right  (mid sky)
+        glColor3f(0.54f, 0.78f, 0.96f);
+        glVertex3f( 22.0f, 10.0f, 20.0f);
+        // upper-left   (mid sky)
+        glColor3f(0.54f, 0.78f, 0.96f);
+        glVertex3f(-22.0f, 10.0f, 20.0f);
     glEnd();
 
-    glColor3f(0.72f, 0.88f, 0.99f);
+    // Upper sky band  (deep azure at the top)
     glBegin(GL_QUADS);
-        glVertex3f(-20.0f, 13.5f, 20.0f);
-        glVertex3f(20.0f, 13.5f, 20.0f);
-        glVertex3f(20.0f, 24.0f, 8.0f);
-        glVertex3f(-20.0f, 24.0f, 8.0f);
+        glColor3f(0.54f, 0.78f, 0.96f);
+        glVertex3f(-22.0f, 10.0f, 20.0f);
+        glColor3f(0.54f, 0.78f, 0.96f);
+        glVertex3f( 22.0f, 10.0f, 20.0f);
+        glColor3f(0.22f, 0.52f, 0.84f);
+        glVertex3f( 22.0f, 26.0f,  6.0f);
+        glColor3f(0.22f, 0.52f, 0.84f);
+        glVertex3f(-22.0f, 26.0f,  6.0f);
     glEnd();
+
+    // ── Distant treeline ───────────────────────────────────────────────────
+    // Claude improved the sky and grass by layering geometry with color
+    // gradients instead of relying on one flat textured quad. Keep that
+    // depth, but swap the old tree silhouettes for simple textured crowns
+    // so the outside still reads as a garden instead of a painted backdrop.
+    const TreeMound trees[] = {
+        { -18.0f, 0.0f, 5.2f, 3.4f },
+        { -12.5f, 0.0f, 6.8f, 2.8f },
+        {  -7.0f, 0.0f, 5.5f, 2.4f },
+        {  -2.5f, 0.0f, 7.2f, 3.0f },
+        {   3.0f, 0.0f, 6.0f, 2.6f },
+        {   8.5f, 0.0f, 7.8f, 3.2f },
+        {  14.0f, 0.0f, 5.6f, 2.9f },
+        {  19.0f, 0.0f, 6.4f, 2.5f },
+    };
+    for (int i = 0; i < static_cast<int>(sizeof(trees) / sizeof(trees[0])); ++i) {
+        drawOutdoorTree(trees[i], i % 3);
+    }
+
+    // ── Grass ground plane — three depth layers for colour variation ───────
+    // Far grass (slightly yellowish, desaturated by atmospheric haze)
+    glBegin(GL_QUADS);
+        glColor3f(0.34f, 0.52f, 0.24f);
+        glVertex3f(-22.0f, -0.02f, 19.9f);
+        glVertex3f( 22.0f, -0.02f, 19.9f);
+        glColor3f(0.38f, 0.58f, 0.26f);
+        glVertex3f( 22.0f, -0.02f, 12.0f);
+        glVertex3f(-22.0f, -0.02f, 12.0f);
+    glEnd();
+
+    // Mid grass
+    glBegin(GL_QUADS);
+        glColor3f(0.38f, 0.58f, 0.26f);
+        glVertex3f(-22.0f, -0.02f, 12.0f);
+        glVertex3f( 22.0f, -0.02f, 12.0f);
+        glColor3f(0.44f, 0.64f, 0.28f);
+        glVertex3f( 22.0f, -0.02f,  7.0f);
+        glVertex3f(-22.0f, -0.02f,  7.0f);
+    glEnd();
+
+    // Near grass (richest green, closest to the room)
+    glBegin(GL_QUADS);
+        glColor3f(0.44f, 0.64f, 0.28f);
+        glVertex3f(-22.0f, -0.02f,  7.0f);
+        glVertex3f( 22.0f, -0.02f,  7.0f);
+        glColor3f(0.40f, 0.60f, 0.24f);
+        glVertex3f( 22.0f, -0.02f,  5.02f);
+        glVertex3f(-22.0f, -0.02f,  5.02f);
+    glEnd();
+
+    // ── Garden path (stone/gravel strip leading from the door) ────────────
+    glBegin(GL_QUADS);
+        glColor3f(0.58f, 0.54f, 0.48f);
+        glVertex3f(-1.8f, -0.01f,  5.04f);
+        glVertex3f( 1.8f, -0.01f,  5.04f);
+        glColor3f(0.52f, 0.48f, 0.43f);
+        glVertex3f( 3.2f, -0.01f, 11.5f);
+        glVertex3f(-3.2f, -0.01f, 11.5f);
+    glEnd();
+
+    // Path edge darkening strips (simulate depth between grass and path)
+    glColor3f(0.28f, 0.40f, 0.18f);
+    glBegin(GL_QUADS);
+        glVertex3f(-1.8f,  -0.015f,  5.04f);
+        glVertex3f(-1.55f, -0.015f,  5.04f);
+        glVertex3f(-2.90f, -0.015f, 11.5f);
+        glVertex3f(-3.2f,  -0.015f, 11.5f);
+    glEnd();
+    glBegin(GL_QUADS);
+        glVertex3f( 1.55f, -0.015f,  5.04f);
+        glVertex3f( 1.8f,  -0.015f,  5.04f);
+        glVertex3f( 3.2f,  -0.015f, 11.5f);
+        glVertex3f( 2.90f, -0.015f, 11.5f);
+    glEnd();
+
+    // ── Low garden wall / hedge strip at far end ───────────────────────────
+    // A simple dark-green box to close the scene visually.
+    glColor3f(0.15f, 0.30f, 0.12f);
+    glBegin(GL_QUADS);
+        // Front face
+        glVertex3f(-20.0f, 0.0f,  18.8f);
+        glVertex3f( 20.0f, 0.0f,  18.8f);
+        glVertex3f( 20.0f, 1.4f,  18.8f);
+        glVertex3f(-20.0f, 1.4f,  18.8f);
+    glEnd();
+    glColor3f(0.12f, 0.24f, 0.10f);
+    glBegin(GL_QUADS);
+        // Top face
+        glVertex3f(-20.0f, 1.4f, 18.8f);
+        glVertex3f( 20.0f, 1.4f, 18.8f);
+        glVertex3f( 20.0f, 1.4f, 20.0f);
+        glVertex3f(-20.0f, 1.4f, 20.0f);
+    glEnd();
+    // Lighter tops for a rounded hedge feel
+    glColor3f(0.22f, 0.42f, 0.18f);
+    glBegin(GL_QUADS);
+        glVertex3f(-20.0f, 1.35f, 18.7f);
+        glVertex3f( 20.0f, 1.35f, 18.7f);
+        glVertex3f( 20.0f, 1.40f, 18.8f);
+        glVertex3f(-20.0f, 1.40f, 18.8f);
+    glEnd();
+
     glPopAttrib();
-
-    drawQuad(
-        -18.0f, -0.02f, 5.02f,   18.0f, -0.02f, 5.02f,
-         18.0f, -0.02f, 20.0f,  -18.0f, -0.02f, 20.0f,
-        0.48f, 0.66f, 0.34f, TEX_GRASS, 0.34f
-    );
-
-    drawQuad(
-        -2.2f, -0.01f, 5.04f,   2.2f, -0.01f, 5.04f,
-         3.6f, -0.01f, 11.0f,  -3.6f, -0.01f, 11.0f,
-        0.38f, 0.31f, 0.23f, TEX_FLOOR, 0.45f
-    );
-
-    drawQuad(
-        -18.0f, 0.0f, 20.0f,   18.0f, 0.0f, 20.0f,
-         18.0f, 3.8f, 20.0f,  -18.0f, 3.8f, 20.0f,
-        0.24f, 0.34f, 0.18f, TEX_GRASS, 0.18f
-    );
 }
 
 void drawBrassKeyModel(float keyX, float keyY, float keyZ) {
@@ -493,18 +665,18 @@ void drawRoom() {
         0.56f, 0.50f, 0.42f, TEX_WALLPAPER, 0.55f
     );
 
-    drawQuad(
-        -5,0,5,   -1,0,5,   -1,4,5,   -5,4,5,
+    drawBox(
+        -5.0f, 0.0f, kFrontWallInnerZ,  -1.0f, 4.0f, kFrontWallOuterZ,
         0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
 
-    drawQuad(
-        1,0,5,   5,0,5,   5,4,5,   1,4,5,
+    drawBox(
+        1.0f, 0.0f, kFrontWallInnerZ,   5.0f, 4.0f, kFrontWallOuterZ,
         0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
 
-    drawQuad(
-        -1,2.5,5,   1,2.5,5,   1,4,5,   -1,4,5,
+    drawBox(
+        -1.0f, 2.5f, kFrontWallInnerZ,   1.0f, 4.0f, kFrontWallOuterZ,
         0.60f, 0.55f, 0.47f, TEX_WALLPAPER, 0.55f
     );
 
@@ -555,19 +727,16 @@ void drawDoor() {
 
     glPopMatrix();
 
-    drawQuad(
-        -1.15f,0,4.99f,  -1.0f,0,4.99f,
-        -1.0f,2.65f,4.99f,  -1.15f,2.65f,4.99f,
-        0.3f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
+    drawBox(
+        -1.15f, 0.0f, kDoorFrameInnerZ,  -1.0f, 2.65f, kDoorFrameOuterZ,
+        0.30f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
     );
-    drawQuad(
-        1.0f,0,4.99f,   1.15f,0,4.99f,
-        1.15f,2.65f,4.99f,   1.0f,2.65f,4.99f,
-        0.3f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
+    drawBox(
+        1.0f, 0.0f, kDoorFrameInnerZ,   1.15f, 2.65f, kDoorFrameOuterZ,
+        0.30f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
     );
-    drawQuad(
-        -1.15f,2.5f,4.99f,   1.15f,2.5f,4.99f,
-        1.15f,2.65f,4.99f,  -1.15f,2.65f,4.99f,
-        0.3f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
+    drawBox(
+        -1.15f, 2.5f, kDoorFrameInnerZ,   1.15f, 2.65f, kDoorFrameOuterZ,
+        0.30f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
     );
 }
