@@ -219,6 +219,7 @@ void drawRoomTrim() {
     const float trimH = 0.14f;
     const float crownY = 3.82f;
 
+    // ── Floor-level skirting boards (all four walls, full run) ────────────
     drawBox(-kRoomHalf, 0.0f, -kRoomHalf, kRoomHalf, trimH, -kRoomHalf + 0.12f,
             0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
     drawBox(-kRoomHalf, 0.0f, kRoomHalf - 0.12f, kRoomHalf, trimH, kRoomHalf,
@@ -228,14 +229,40 @@ void drawRoomTrim() {
     drawBox(kRoomHalf - 0.12f, 0.0f, -kRoomHalf, kRoomHalf, trimH, kRoomHalf,
             0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
 
+    // ── Crown moulding — back wall ─────────────────────────────────────────
     drawBox(-kRoomHalf, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, -kRoomHalf + 0.18f,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
-    drawBox(-kRoomHalf, crownY, kRoomHalf - 0.18f, kRoomHalf, kRoomHeight, kRoomHalf,
-            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // ── Crown moulding — left wall ─────────────────────────────────────────
     drawBox(-kRoomHalf, crownY, -kRoomHalf, -kRoomHalf + 0.18f, kRoomHeight, kRoomHalf,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // ── Crown moulding — right wall ────────────────────────────────────────
     drawBox(kRoomHalf - 0.18f, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, kRoomHalf,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // ── Crown moulding — front (door) wall ────────────────────────────────
+    // The front wall geometry is split into three pieces around the door
+    // opening (-1 to +1 at Z = kFrontWallInnerZ..kFrontWallOuterZ).
+    // We match those same X extents so the trim sits flush against the wall.
+
+    // Left segment: full height wall from X=-5 to X=-1
+    drawBox(-kRoomHalf, crownY, kFrontWallInnerZ, -1.0f, kRoomHeight, kFrontWallOuterZ,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // Right segment: full height wall from X=+1 to X=+5
+    drawBox(1.0f, crownY, kFrontWallInnerZ, kRoomHalf, kRoomHeight, kFrontWallOuterZ,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // Above-door segment: wall from X=-1 to X=+1, above Y=2.5
+    drawBox(-1.0f, crownY, kFrontWallInnerZ, 1.0f, kRoomHeight, kFrontWallOuterZ,
+            0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
+
+    // Also add the front-side face of the crown on the front wall so it is
+    // visible from inside the room (the trim faces inward, i.e. toward -Z).
+    // The back wall trim is fine because the camera never looks at its back,
+    // but for the front wall the interior face is the one you see.
+    // The drawBox helper renders all six faces, so no extra quad is needed.
 }
 
 // ---------------------------------------------------------------------------
@@ -280,10 +307,6 @@ void drawOutdoorScene() {
     glEnd();
 
     // ── Distant treeline ───────────────────────────────────────────────────
-    // Claude improved the sky and grass by layering geometry with color
-    // gradients instead of relying on one flat textured quad. Keep that
-    // depth, but swap the old tree silhouettes for simple textured crowns
-    // so the outside still reads as a garden instead of a painted backdrop.
     const TreeMound trees[] = {
         { -18.0f, 0.0f, 5.2f, 3.4f },
         { -12.5f, 0.0f, 6.8f, 2.8f },
@@ -355,7 +378,6 @@ void drawOutdoorScene() {
     glEnd();
 
     // ── Low garden wall / hedge strip at far end ───────────────────────────
-    // A simple dark-green box to close the scene visually.
     glColor3f(0.15f, 0.30f, 0.12f);
     glBegin(GL_QUADS);
         // Front face
@@ -736,7 +758,7 @@ void drawDoor() {
         0.30f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
     );
     drawBox(
-        -1.15f, 2.5f, kDoorFrameInnerZ,   1.15f, 2.65f, kDoorFrameOuterZ,
+        -1.15f, 2.52f, kDoorFrameInnerZ,   1.15f, 2.66f, kDoorFrameOuterZ,
         0.30f, 0.18f, 0.05f, TEX_WOOD_DARK, 0.8f
     );
 }

@@ -9,15 +9,59 @@ static const float DEG2RAD     = PI / 180.0f;
 static const float MOVE_SPEED  = 0.15f;
 static const float LOOK_SENS   = 0.15f;
 static const float PITCH_LIMIT = 89.0f;
+static const float INDOOR_FRONT_LIMIT = 4.60f;
+static const float PLAYER_RADIUS = 0.22f;
+static const float CHEST_MIN_X = 3.18f;
+static const float CHEST_MAX_X = 4.58f;
+static const float CHEST_MIN_Z = 0.92f;
+static const float CHEST_MAX_Z = 2.28f;
+static const float CHEST_BLOCK_OPEN_PROGRESS = 0.72f;
 
-float camX = 0.0f, camY = 1.0f, camZ = 5.0f;
-float angleY = 0.0f;
+float camX = 0.0f, camY = 1.0f, camZ = 0.0f;
+float angleY = 180.0f;
 float angleX = 0.0f;
 int   winW = 900, winH = 600;
 bool  warping       = false;
 bool  mouseCaptured = true;
 
 // --- Helpers ---
+void pushOutOfAABB(float prevX, float prevZ,
+                   float& x, float& z,
+                   float minX, float maxX,
+                   float minZ, float maxZ) {
+    const float expandedMinX = minX - PLAYER_RADIUS;
+    const float expandedMaxX = maxX + PLAYER_RADIUS;
+    const float expandedMinZ = minZ - PLAYER_RADIUS;
+    const float expandedMaxZ = maxZ + PLAYER_RADIUS;
+
+    if (x < expandedMinX || x > expandedMaxX || z < expandedMinZ || z > expandedMaxZ) {
+        return;
+    }
+
+    const bool prevInsideX = prevX >= expandedMinX && prevX <= expandedMaxX;
+    const bool prevInsideZ = prevZ >= expandedMinZ && prevZ <= expandedMaxZ;
+
+    if (!prevInsideX) {
+        x = (prevX < expandedMinX) ? expandedMinX : expandedMaxX;
+        return;
+    }
+    if (!prevInsideZ) {
+        z = (prevZ < expandedMinZ) ? expandedMinZ : expandedMaxZ;
+        return;
+    }
+
+    const float pushLeft = std::fabs(x - expandedMinX);
+    const float pushRight = std::fabs(expandedMaxX - x);
+    const float pushFront = std::fabs(z - expandedMinZ);
+    const float pushBack = std::fabs(expandedMaxZ - z);
+
+    if (std::fmin(pushLeft, pushRight) < std::fmin(pushFront, pushBack)) {
+        x = (pushLeft < pushRight) ? expandedMinX : expandedMaxX;
+    } else {
+        z = (pushFront < pushBack) ? expandedMinZ : expandedMaxZ;
+    }
+}
+
 void clampToRoom(float& x, float& y, float& z) {
     if (z < -4.75f) z = -4.75f;
 
@@ -26,13 +70,13 @@ void clampToRoom(float& x, float& y, float& z) {
     if (!doorOpen) {
         if (x < -4.75f) x = -4.75f;
         if (x >  4.75f) x =  4.75f;
-        if (z > 4.72f) z = 4.72f;
-    } else if (z <= 4.72f) {
+        if (z > INDOOR_FRONT_LIMIT) z = INDOOR_FRONT_LIMIT;
+    } else if (z <= INDOOR_FRONT_LIMIT) {
         if (x < -4.75f) x = -4.75f;
         if (x >  4.75f) x =  4.75f;
     } else {
         if (z < 5.15f && (x < -1.0f || x > 1.0f)) {
-            z = 4.72f;
+            z = INDOOR_FRONT_LIMIT;
         }
         if (x < -12.0f) x = -12.0f;
         if (x >  12.0f) x =  12.0f;
@@ -44,10 +88,15 @@ void clampToRoom(float& x, float& y, float& z) {
 }
 
 void moveCamera(float dx, float dy, float dz) {
+    const float prevX = camX;
+    const float prevZ = camZ;
     float nextX = camX + dx;
     float nextY = camY + dy;
     float nextZ = camZ + dz;
     clampToRoom(nextX, nextY, nextZ);
+    if (!codeBoxUnlocked || codeBoxOpenProgress < CHEST_BLOCK_OPEN_PROGRESS) {
+        pushOutOfAABB(prevX, prevZ, nextX, nextZ, CHEST_MIN_X, CHEST_MAX_X, CHEST_MIN_Z, CHEST_MAX_Z);
+    }
     camX = nextX;
     camY = nextY;
     camZ = nextZ;
