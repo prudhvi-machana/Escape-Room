@@ -1,6 +1,12 @@
 #include "objects.h"
 #include "../utils/utils.h"
 
+namespace {
+
+unsigned int gPaintingTexture = 0;
+
+} // namespace
+
 void drawPainting() {
     constexpr float kFrameMinX = -1.35f;
     constexpr float kFrameMaxX = 1.35f;
@@ -33,8 +39,11 @@ void drawPainting() {
     const float imageMinY = (kFrameMinY + kFrameMaxY - imageHeight) * 0.5f;
     const float imageMaxY = imageMinY + imageHeight;
     const float imageZ = -4.975f;
-    const unsigned int paintingTexture = loadExternalTexture("resources/painting/1.ppm");
-    if (paintingTexture == 0) {
+    if (gPaintingTexture == 0) {
+        gPaintingTexture = loadExternalTexture("resources/painting/1.ppm");
+    }
+
+    if (gPaintingTexture == 0) {
         drawQuad(
             imageMinX, imageMinY, imageZ,
             imageMaxX, imageMinY, imageZ,
@@ -50,6 +59,6 @@ void drawPainting() {
         imageMaxX, imageMinY, imageZ,
         imageMaxX, imageMaxY, imageZ,
         imageMinX, imageMaxY, imageZ,
-        1.0f, 1.0f, 1.0f, paintingTexture
+        1.0f, 1.0f, 1.0f, gPaintingTexture
     );
 }

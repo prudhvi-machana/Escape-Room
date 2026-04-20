@@ -37,6 +37,7 @@ enum SkyboxFace {
 
 GLuint gSkyboxTextures[SKYBOX_FACE_COUNT] = {};
 bool gSkyboxLoaded = false;
+GLuint gFloorTexture = 0;
 
 bool readPpmHeader(std::ifstream& in, int& width, int& height, int& maxValue) {
     auto nextToken = [&in]() -> std::string {
@@ -645,6 +646,7 @@ void drawCodeBox() {
 
 void initRoom() {
     initSkyboxTextures();
+    gFloorTexture = loadExternalTexture("resources/Mantel.ppm");
     worldItems.clear();
     drawerOpen = false;
     codeBoxUnlocked = false;
@@ -694,13 +696,12 @@ void initRoom() {
 }
 
 void drawRoom() {
-    const unsigned int floorTexture = loadExternalTexture("resources/Mantel.ppm");
     drawOutdoorScene();
 
-    if (floorTexture != 0) {
+    if (gFloorTexture != 0) {
         drawExternalTexturedQuad(
             -5,0,-5,   5,0,-5,   5,0,5,   -5,0,5,
-            1.0f, 1.0f, 1.0f, floorTexture, 0.55f
+            1.0f, 1.0f, 1.0f, gFloorTexture, 0.55f
         );
     } else {
         drawQuad(

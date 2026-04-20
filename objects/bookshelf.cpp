@@ -91,7 +91,7 @@ void drawBookshelfBooks() {
 void drawBookshelf() {
     const float shelfGap = 0.045f;
     const float middleShelfGap = 0.035f;
-    const float widestRow = std::fmax(
+    static const float widestRow = std::fmax(
         measureShelfRowWidth(kBottomShelf, kShelfBookCount, shelfGap),
         std::fmax(
             measureShelfRowWidth(kMiddleShelf, kShelfBookCount, middleShelfGap),
