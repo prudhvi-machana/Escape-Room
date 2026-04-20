@@ -60,6 +60,19 @@ void drawBox(float x1, float y1, float z1,
     drawQuad(x1, y1, z1,  x2, y1, z1,  x2, y1, z2,  x1, y1, z2, r * 0.6f, g * 0.6f, b * 0.6f, texture, textureScale);
 }
 
+void drawExternalTexturedBox(float x1, float y1, float z1,
+                             float x2, float y2, float z2,
+                             float r, float g, float b,
+                             unsigned int textureId,
+                             float textureScale) {
+    drawExternalTexturedQuad(x1, y1, z2,  x2, y1, z2,  x2, y2, z2,  x1, y2, z2, r, g, b, textureId, textureScale);
+    drawExternalTexturedQuad(x2, y1, z1,  x1, y1, z1,  x1, y2, z1,  x2, y2, z1, r * 0.92f, g * 0.92f, b * 0.92f, textureId, textureScale);
+    drawExternalTexturedQuad(x1, y1, z1,  x1, y1, z2,  x1, y2, z2,  x1, y2, z1, r * 0.82f, g * 0.82f, b * 0.82f, textureId, textureScale);
+    drawExternalTexturedQuad(x2, y1, z2,  x2, y1, z1,  x2, y2, z1,  x2, y2, z2, r * 0.75f, g * 0.75f, b * 0.75f, textureId, textureScale);
+    drawExternalTexturedQuad(x1, y2, z2,  x2, y2, z2,  x2, y2, z1,  x1, y2, z1, r * 1.05f, g * 1.05f, b * 1.05f, textureId, textureScale);
+    drawExternalTexturedQuad(x1, y1, z1,  x2, y1, z1,  x2, y1, z2,  x1, y1, z2, r * 0.6f, g * 0.6f, b * 0.6f, textureId, textureScale);
+}
+
 void drawFloorShadowAABB(
     float minX, float maxX,
     float minZ, float maxZ,

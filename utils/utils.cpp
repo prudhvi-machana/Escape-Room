@@ -3,6 +3,9 @@
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
+#include <fstream>
+#include <limits>
+#include <map>
 #include <string>
 #include "../camera/camera.h"
 #include "utils.h"
@@ -23,6 +26,7 @@ std::string              codeBoxInput = "";
 namespace {
 
 GLuint gTextures[TEX_COUNT] = {};
+std::map<std::string, GLuint> gExternalTextures;
 
 const char* kDrawerBookOverlayLines[] = {
     "K eep    searching...",
@@ -250,6 +254,42 @@ void uploadTexture(TextureId id, unsigned char* data, int size) {
     gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, size, size, GL_RGB, GL_UNSIGNED_BYTE, data);
 }
 
+bool readPpmHeader(std::ifstream& in, int& width, int& height, int& maxValue) {
+    auto nextToken = [&in]() -> std::string {
+        std::string token;
+        char ch = '\0';
+        while (in.get(ch)) {
+            if (ch == '#') {
+                in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                continue;
+            }
+            if (!std::isspace(static_cast<unsigned char>(ch))) {
+                token.push_back(ch);
+                break;
+            }
+        }
+
+        while (in.get(ch)) {
+            if (std::isspace(static_cast<unsigned char>(ch))) break;
+            token.push_back(ch);
+        }
+        return token;
+    };
+
+    const std::string magic = nextToken();
+    if (magic != "P6") return false;
+
+    const std::string widthToken = nextToken();
+    const std::string heightToken = nextToken();
+    const std::string maxValueToken = nextToken();
+    if (widthToken.empty() || heightToken.empty() || maxValueToken.empty()) return false;
+
+    width = std::stoi(widthToken);
+    height = std::stoi(heightToken);
+    maxValue = std::stoi(maxValueToken);
+    return width > 0 && height > 0 && maxValue == 255;
+}
+
 void fillTexture(unsigned char* data, int size, TextureId id) {
     for (int y = 0; y < size; ++y) {
         for (int x = 0; x < size; ++x) {
@@ -437,6 +477,36 @@ void applyMaterial(float r, float g, float b, float ambientBoost, float shinines
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
+unsigned int loadExternalTexture(const std::string& path) {
+    std::map<std::string, GLuint>::const_iterator it = gExternalTextures.find(path);
+    if (it != gExternalTextures.end()) return it->second;
+
+    std::ifstream in(path.c_str(), std::ios::binary);
+    if (!in) return 0;
+
+    int width = 0;
+    int height = 0;
+    int maxValue = 0;
+    if (!readPpmHeader(in, width, height, maxValue)) return 0;
+
+    std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 3u);
+    in.read(reinterpret_cast<char*>(pixels.data()), static_cast<std::streamsize>(pixels.size()));
+    if (in.gcount() != static_cast<std::streamsize>(pixels.size())) return 0;
+
+    GLuint textureId = 0;
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+    gExternalTextures[path] = textureId;
+    return textureId;
+}
+
 void drawQuad(
     float x1,float y1,float z1,
     float x2,float y2,float z2,
@@ -479,6 +549,94 @@ void drawQuad(
     glEnd();
 
     if (texture != TEX_NONE) glDisable(GL_TEXTURE_2D);
+}
+
+void drawExternalTexturedQuad(
+    float x1,float y1,float z1,
+    float x2,float y2,float z2,
+    float x3,float y3,float z3,
+    float x4,float y4,float z4,
+    float r, float g, float b,
+    unsigned int textureId,
+    float textureScale)
+{
+    if (textureId == 0) {
+        drawQuad(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b, TEX_GENERIC, textureScale);
+        return;
+    }
+
+    float ux = x2 - x1, uy = y2 - y1, uz = z2 - z1;
+    float vx = x3 - x1, vy = y3 - y1, vz = z3 - z1;
+    float nx = uy * vz - uz * vy;
+    float ny = uz * vx - ux * vz;
+    float nz = ux * vy - uy * vx;
+    float len = sqrtf(nx * nx + ny * ny + nz * nz);
+    if (len > 1e-6f) {
+        nx /= len;
+        ny /= len;
+        nz /= len;
+    }
+
+    applyMaterial(r, g, b);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    float lenU = sqrtf(ux * ux + uy * uy + uz * uz) * textureScale;
+    float lenV = sqrtf(vx * vx + vy * vy + vz * vz) * textureScale;
+    if (lenU < 0.001f) lenU = 1.0f;
+    if (lenV < 0.001f) lenV = 1.0f;
+
+    glBegin(GL_QUADS);
+        glNormal3f(nx, ny, nz);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(x1,y1,z1);
+        glTexCoord2f(lenU, 0.0f); glVertex3f(x2,y2,z2);
+        glTexCoord2f(lenU, lenV); glVertex3f(x3,y3,z3);
+        glTexCoord2f(0.0f, lenV); glVertex3f(x4,y4,z4);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+}
+
+void drawExternalImageQuad(
+    float x1,float y1,float z1,
+    float x2,float y2,float z2,
+    float x3,float y3,float z3,
+    float x4,float y4,float z4,
+    float r, float g, float b,
+    unsigned int textureId)
+{
+    if (textureId == 0) {
+        drawQuad(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, r, g, b, TEX_GENERIC, 1.0f);
+        return;
+    }
+
+    float ux = x2 - x1, uy = y2 - y1, uz = z2 - z1;
+    float vx = x3 - x1, vy = y3 - y1, vz = z3 - z1;
+    float nx = uy * vz - uz * vy;
+    float ny = uz * vx - ux * vz;
+    float nz = ux * vy - uy * vx;
+    float len = sqrtf(nx * nx + ny * ny + nz * nz);
+    if (len > 1e-6f) {
+        nx /= len;
+        ny /= len;
+        nz /= len;
+    }
+
+    applyMaterial(r, g, b);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBegin(GL_QUADS);
+        glNormal3f(nx, ny, nz);
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(x1, y1, z1);
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(x2, y2, z2);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(x3, y3, z3);
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(x4, y4, z4);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 // --- Item helpers ---

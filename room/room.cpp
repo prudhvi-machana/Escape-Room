@@ -1,5 +1,9 @@
 #include <GL/glut.h>
 #include <cmath>
+#include <fstream>
+#include <limits>
+#include <string>
+#include <vector>
 #include "room.h"
 #include "../utils/utils.h"
 #include "../utils/lighting.h"
@@ -21,65 +25,169 @@ constexpr float kFrontWallOuterZ = 5.0f;
 constexpr float kDoorFrameInnerZ = 4.86f;
 constexpr float kDoorFrameOuterZ = 4.96f;
 
-struct TreeMound {
-    float cx;
-    float baseY;
-    float peakY;
-    float hw;
+enum SkyboxFace {
+    SKYBOX_FRONT = 0,
+    SKYBOX_BACK,
+    SKYBOX_LEFT,
+    SKYBOX_RIGHT,
+    SKYBOX_TOP,
+    SKYBOX_BOTTOM,
+    SKYBOX_FACE_COUNT
 };
 
-void drawOutdoorTree(const TreeMound& tree, int variant) {
-    const float treeFrontZ = 19.72f;
-    const float trunkHalfW = tree.hw * 0.11f;
-    const float trunkHeight = tree.peakY * 0.26f;
-    const float trunkMinX = tree.cx - trunkHalfW;
-    const float trunkMaxX = tree.cx + trunkHalfW;
+GLuint gSkyboxTextures[SKYBOX_FACE_COUNT] = {};
+bool gSkyboxLoaded = false;
 
-    drawBox(
-        trunkMinX, tree.baseY, treeFrontZ + 0.02f,
-        trunkMaxX, tree.baseY + trunkHeight, treeFrontZ + 0.30f,
-        0.34f, 0.22f, 0.10f, TEX_WOOD_DARK, 1.8f
-    );
+bool readPpmHeader(std::ifstream& in, int& width, int& height, int& maxValue) {
+    auto nextToken = [&in]() -> std::string {
+        std::string token;
+        char ch = '\0';
+        while (in.get(ch)) {
+            if (ch == '#') {
+                in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                continue;
+            }
+            if (!std::isspace(static_cast<unsigned char>(ch))) {
+                token.push_back(ch);
+                break;
+            }
+        }
 
-    const float crownBaseY = tree.baseY + trunkHeight * 0.62f;
-    const float crownMidY = tree.baseY + tree.peakY * 0.56f;
-    const float crownTopY = tree.baseY + tree.peakY;
+        while (in.get(ch)) {
+            if (std::isspace(static_cast<unsigned char>(ch))) break;
+            token.push_back(ch);
+        }
+        return token;
+    };
 
-    const float lowerInset = 0.78f + 0.03f * variant;
-    const float midInset = 0.52f + 0.02f * variant;
-    const float topInset = 0.22f + 0.02f * variant;
+    const std::string magic = nextToken();
+    if (magic != "P6") return false;
 
-    drawQuad(
-        tree.cx - tree.hw,                crownBaseY, treeFrontZ,
-        tree.cx + tree.hw,                crownBaseY, treeFrontZ,
-        tree.cx + tree.hw * lowerInset,   crownMidY,  treeFrontZ,
-        tree.cx - tree.hw * lowerInset,   crownMidY,  treeFrontZ,
-        0.20f, 0.38f, 0.14f, TEX_GRASS, 0.55f
-    );
+    const std::string widthToken = nextToken();
+    const std::string heightToken = nextToken();
+    const std::string maxValueToken = nextToken();
+    if (widthToken.empty() || heightToken.empty() || maxValueToken.empty()) return false;
 
-    drawQuad(
-        tree.cx - tree.hw * 0.78f,        crownMidY - 0.24f, treeFrontZ - 0.01f,
-        tree.cx + tree.hw * 0.78f,        crownMidY - 0.24f, treeFrontZ - 0.01f,
-        tree.cx + tree.hw * midInset,     crownTopY - 0.95f, treeFrontZ - 0.01f,
-        tree.cx - tree.hw * midInset,     crownTopY - 0.95f, treeFrontZ - 0.01f,
-        0.24f, 0.46f, 0.17f, TEX_GRASS, 0.62f
-    );
+    width = std::stoi(widthToken);
+    height = std::stoi(heightToken);
+    maxValue = std::stoi(maxValueToken);
+    return width > 0 && height > 0 && maxValue == 255;
+}
 
-    drawQuad(
-        tree.cx - tree.hw * 0.46f,        crownTopY - 1.42f, treeFrontZ - 0.02f,
-        tree.cx + tree.hw * 0.46f,        crownTopY - 1.42f, treeFrontZ - 0.02f,
-        tree.cx + tree.hw * topInset,     crownTopY,         treeFrontZ - 0.02f,
-        tree.cx - tree.hw * topInset,     crownTopY,         treeFrontZ - 0.02f,
-        0.29f, 0.54f, 0.19f, TEX_GRASS, 0.68f
-    );
+bool loadSkyboxFaceFromPpm(const char* path, GLuint& textureId) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) return false;
 
-    drawQuad(
-        tree.cx - tree.hw * 0.34f,        crownMidY - 0.14f, treeFrontZ - 0.03f,
-        tree.cx + tree.hw * 0.10f,        crownMidY - 0.06f, treeFrontZ - 0.03f,
-        tree.cx + tree.hw * 0.18f,        crownTopY - 1.10f, treeFrontZ - 0.03f,
-        tree.cx - tree.hw * 0.26f,        crownTopY - 1.18f, treeFrontZ - 0.03f,
-        0.36f, 0.62f, 0.24f, TEX_GRASS, 0.74f
-    );
+    int width = 0;
+    int height = 0;
+    int maxValue = 0;
+    if (!readPpmHeader(in, width, height, maxValue)) return false;
+
+    std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 3u);
+    in.read(reinterpret_cast<char*>(pixels.data()), static_cast<std::streamsize>(pixels.size()));
+    if (in.gcount() != static_cast<std::streamsize>(pixels.size())) return false;
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+    return true;
+}
+
+void initSkyboxTextures() {
+    if (gSkyboxLoaded) return;
+
+    const char* facePaths[SKYBOX_FACE_COUNT] = {
+        "resources/skybox/front.ppm",
+        "resources/skybox/back.ppm",
+        "resources/skybox/left.ppm",
+        "resources/skybox/right.ppm",
+        "resources/skybox/top.ppm",
+        "resources/skybox/bottom.ppm"
+    };
+
+    glGenTextures(SKYBOX_FACE_COUNT, gSkyboxTextures);
+    gSkyboxLoaded = true;
+
+    for (int i = 0; i < SKYBOX_FACE_COUNT; ++i) {
+        if (!loadSkyboxFaceFromPpm(facePaths[i], gSkyboxTextures[i])) {
+            gSkyboxLoaded = false;
+            break;
+        }
+    }
+}
+
+void drawSkyboxFace(GLuint textureId,
+                    float x1, float y1, float z1, float u1, float v1,
+                    float x2, float y2, float z2, float u2, float v2,
+                    float x3, float y3, float z3, float u3, float v3,
+                    float x4, float y4, float z4, float u4, float v4) {
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBegin(GL_QUADS);
+        glTexCoord2f(u1, v1); glVertex3f(x1, y1, z1);
+        glTexCoord2f(u2, v2); glVertex3f(x2, y2, z2);
+        glTexCoord2f(u3, v3); glVertex3f(x3, y3, z3);
+        glTexCoord2f(u4, v4); glVertex3f(x4, y4, z4);
+    glEnd();
+}
+
+void drawSkybox() {
+    if (!gSkyboxLoaded) return;
+
+    const float cx = 0.0f;
+    const float cy = 7.5f;
+    const float cz = 12.0f;
+    const float half = 26.0f;
+
+    const float minX = cx - half;
+    const float maxX = cx + half;
+    const float minY = cy - half;
+    const float maxY = cy + half;
+    const float minZ = cz - half;
+    const float maxZ = cz + half;
+
+    glEnable(GL_TEXTURE_2D);
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // Faces are submitted clockwise from the viewer's position inside the cube.
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_FRONT],
+                   minX, minY, maxZ, 0.0f, 1.0f,
+                   maxX, minY, maxZ, 1.0f, 1.0f,
+                   maxX, maxY, maxZ, 1.0f, 0.0f,
+                   minX, maxY, maxZ, 0.0f, 0.0f);
+
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_BACK],
+                   maxX, minY, minZ, 0.0f, 1.0f,
+                   minX, minY, minZ, 1.0f, 1.0f,
+                   minX, maxY, minZ, 1.0f, 0.0f,
+                   maxX, maxY, minZ, 0.0f, 0.0f);
+
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_LEFT],
+                   minX, minY, minZ, 0.0f, 1.0f,
+                   minX, minY, maxZ, 1.0f, 1.0f,
+                   minX, maxY, maxZ, 1.0f, 0.0f,
+                   minX, maxY, minZ, 0.0f, 0.0f);
+
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_RIGHT],
+                   maxX, minY, maxZ, 0.0f, 1.0f,
+                   maxX, minY, minZ, 1.0f, 1.0f,
+                   maxX, maxY, minZ, 1.0f, 0.0f,
+                   maxX, maxY, maxZ, 0.0f, 0.0f);
+
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_TOP],
+                   minX, maxY, maxZ, 0.0f, 1.0f,
+                   maxX, maxY, maxZ, 1.0f, 1.0f,
+                   maxX, maxY, minZ, 1.0f, 0.0f,
+                   minX, maxY, minZ, 0.0f, 0.0f);
+
+    drawSkyboxFace(gSkyboxTextures[SKYBOX_BOTTOM],
+                   minX, minY, minZ, 0.0f, 1.0f,
+                   maxX, minY, minZ, 1.0f, 1.0f,
+                   maxX, minY, maxZ, 1.0f, 0.0f,
+                   minX, minY, maxZ, 0.0f, 0.0f);
 }
 
 void projectPointToFloorFromLight(
@@ -266,60 +374,15 @@ void drawRoomTrim() {
 }
 
 // ---------------------------------------------------------------------------
-// Outdoor scene — sky gradient + layered grass
+// Outdoor scene — skybox + ground dressing
 // ---------------------------------------------------------------------------
 void drawOutdoorScene() {
-    glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_LIGHTING);
+    glDepthMask(GL_FALSE);
+    drawSkybox();
+    glDepthMask(GL_TRUE);
     glDisable(GL_TEXTURE_2D);
-
-    // ── Sky: smooth vertical gradient via per-vertex colours ──────────────
-    // We draw a single quad covering the whole back wall area but use
-    // GL_SMOOTH shading so the top is deep blue and the bottom fades to a
-    // warm horizon haze.  Two quads let us add a subtle mid-tone band.
-
-    // Lower sky / horizon band  (warm pale blue-white)
-    glBegin(GL_QUADS);
-        // bottom-left  (horizon)
-        glColor3f(0.82f, 0.91f, 0.98f);
-        glVertex3f(-22.0f, -0.5f, 20.0f);
-        // bottom-right (horizon)
-        glColor3f(0.82f, 0.91f, 0.98f);
-        glVertex3f( 22.0f, -0.5f, 20.0f);
-        // upper-right  (mid sky)
-        glColor3f(0.54f, 0.78f, 0.96f);
-        glVertex3f( 22.0f, 10.0f, 20.0f);
-        // upper-left   (mid sky)
-        glColor3f(0.54f, 0.78f, 0.96f);
-        glVertex3f(-22.0f, 10.0f, 20.0f);
-    glEnd();
-
-    // Upper sky band  (deep azure at the top)
-    glBegin(GL_QUADS);
-        glColor3f(0.54f, 0.78f, 0.96f);
-        glVertex3f(-22.0f, 10.0f, 20.0f);
-        glColor3f(0.54f, 0.78f, 0.96f);
-        glVertex3f( 22.0f, 10.0f, 20.0f);
-        glColor3f(0.22f, 0.52f, 0.84f);
-        glVertex3f( 22.0f, 26.0f,  6.0f);
-        glColor3f(0.22f, 0.52f, 0.84f);
-        glVertex3f(-22.0f, 26.0f,  6.0f);
-    glEnd();
-
-    // ── Distant treeline ───────────────────────────────────────────────────
-    const TreeMound trees[] = {
-        { -18.0f, 0.0f, 5.2f, 3.4f },
-        { -12.5f, 0.0f, 6.8f, 2.8f },
-        {  -7.0f, 0.0f, 5.5f, 2.4f },
-        {  -2.5f, 0.0f, 7.2f, 3.0f },
-        {   3.0f, 0.0f, 6.0f, 2.6f },
-        {   8.5f, 0.0f, 7.8f, 3.2f },
-        {  14.0f, 0.0f, 5.6f, 2.9f },
-        {  19.0f, 0.0f, 6.4f, 2.5f },
-    };
-    for (int i = 0; i < static_cast<int>(sizeof(trees) / sizeof(trees[0])); ++i) {
-        drawOutdoorTree(trees[i], i % 3);
-    }
 
     // ── Grass ground plane — three depth layers for colour variation ───────
     // Far grass (slightly yellowish, desaturated by atmospheric haze)
@@ -375,32 +438,6 @@ void drawOutdoorScene() {
         glVertex3f( 1.8f,  -0.015f,  5.04f);
         glVertex3f( 3.2f,  -0.015f, 11.5f);
         glVertex3f( 2.90f, -0.015f, 11.5f);
-    glEnd();
-
-    // ── Low garden wall / hedge strip at far end ───────────────────────────
-    glColor3f(0.15f, 0.30f, 0.12f);
-    glBegin(GL_QUADS);
-        // Front face
-        glVertex3f(-20.0f, 0.0f,  18.8f);
-        glVertex3f( 20.0f, 0.0f,  18.8f);
-        glVertex3f( 20.0f, 1.4f,  18.8f);
-        glVertex3f(-20.0f, 1.4f,  18.8f);
-    glEnd();
-    glColor3f(0.12f, 0.24f, 0.10f);
-    glBegin(GL_QUADS);
-        // Top face
-        glVertex3f(-20.0f, 1.4f, 18.8f);
-        glVertex3f( 20.0f, 1.4f, 18.8f);
-        glVertex3f( 20.0f, 1.4f, 20.0f);
-        glVertex3f(-20.0f, 1.4f, 20.0f);
-    glEnd();
-    // Lighter tops for a rounded hedge feel
-    glColor3f(0.22f, 0.42f, 0.18f);
-    glBegin(GL_QUADS);
-        glVertex3f(-20.0f, 1.35f, 18.7f);
-        glVertex3f( 20.0f, 1.35f, 18.7f);
-        glVertex3f( 20.0f, 1.40f, 18.8f);
-        glVertex3f(-20.0f, 1.40f, 18.8f);
     glEnd();
 
     glPopAttrib();
@@ -606,6 +643,7 @@ void drawCodeBox() {
 } // namespace
 
 void initRoom() {
+    initSkyboxTextures();
     worldItems.clear();
     drawerOpen = false;
     codeBoxUnlocked = false;
@@ -655,17 +693,20 @@ void initRoom() {
 }
 
 void drawRoom() {
+    const unsigned int floorTexture = loadExternalTexture("resources/Mantel.ppm");
     drawOutdoorScene();
 
-    drawQuad(
-        -5,0,-5,   5,0,-5,   5,0,5,   -5,0,5,
-        0.44f, 0.41f, 0.38f, TEX_FLOOR, 0.48f
-    );
-
-    drawQuad(
-        -2.3f,0.012f,-3.8f,   3.2f,0.012f,-3.8f,   3.2f,0.012f,1.7f,   -2.3f,0.012f,1.7f,
-        0.58f, 0.18f, 0.12f, TEX_FABRIC, 0.48f
-    );
+    if (floorTexture != 0) {
+        drawExternalTexturedQuad(
+            -5,0,-5,   5,0,-5,   5,0,5,   -5,0,5,
+            1.0f, 1.0f, 1.0f, floorTexture, 0.55f
+        );
+    } else {
+        drawQuad(
+            -5,0,-5,   5,0,-5,   5,0,5,   -5,0,5,
+            0.44f, 0.41f, 0.38f, TEX_FLOOR, 0.48f
+        );
+    }
 
     drawQuad(
         -5,4,-5,   5,4,-5,   5,4,5,   -5,4,5,

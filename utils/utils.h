@@ -62,6 +62,22 @@ void drawQuad(
     TextureId texture = TEX_GENERIC,
     float textureScale = 1.0f);
 void applyMaterial(float r, float g, float b, float ambientBoost = 0.22f, float shininess = 24.0f);
+unsigned int loadExternalTexture(const std::string& path);
+void drawExternalTexturedQuad(
+    float x1,float y1,float z1,
+    float x2,float y2,float z2,
+    float x3,float y3,float z3,
+    float x4,float y4,float z4,
+    float r, float g, float b,
+    unsigned int textureId,
+    float textureScale = 1.0f);
+void drawExternalImageQuad(
+    float x1,float y1,float z1,
+    float x2,float y2,float z2,
+    float x3,float y3,float z3,
+    float x4,float y4,float z4,
+    float r, float g, float b,
+    unsigned int textureId);
 
 // --- Item helpers ---
 int   getNearbyItem(float camX, float camY, float camZ);

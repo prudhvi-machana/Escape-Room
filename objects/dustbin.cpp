@@ -87,6 +87,39 @@ void drawCylinderSide(float bottomRadius, float topRadius,
     }
 }
 
+void drawExternalCylinderSide(float bottomRadius, float topRadius,
+                              float bottomY, float topY,
+                              float r, float g, float b,
+                              unsigned int textureId, float textureScale,
+                              bool outward) {
+    for (int i = 0; i < kSegments; ++i) {
+        float bx1, bz1, bx2, bz2;
+        float tx1, tz1, tx2, tz2;
+        ringPoint(bottomRadius, i, bx1, bz1);
+        ringPoint(bottomRadius, i + 1, bx2, bz2);
+        ringPoint(topRadius, i, tx1, tz1);
+        ringPoint(topRadius, i + 1, tx2, tz2);
+
+        if (outward) {
+            drawExternalTexturedQuad(
+                bx1, bottomY, bz1,
+                bx2, bottomY, bz2,
+                tx2, topY, tz2,
+                tx1, topY, tz1,
+                r, g, b, textureId, textureScale
+            );
+        } else {
+            drawExternalTexturedQuad(
+                bx2, bottomY, bz2,
+                bx1, bottomY, bz1,
+                tx1, topY, tz1,
+                tx2, topY, tz2,
+                r, g, b, textureId, textureScale
+            );
+        }
+    }
+}
+
 void drawTopRim() {
     for (int i = 0; i < kSegments; ++i) {
         float ox1, oz1, ox2, oz2;
@@ -140,18 +173,32 @@ void drawLoosePapers() {
 } // namespace
 
 void drawDustbin() {
+    const unsigned int dustbinTexture = loadExternalTexture("resources/dustbin.ppm");
     drawFloorShadowAABB(kBinMinX, kBinMaxX, kBinMinZ, kBinMaxZ, kBinTopY, 0.24f);
 
     drawDisc(kBinBaseRadius, kBinBottomY, 0.17f, 0.19f, 0.21f, TEX_METAL, 2.4f, false);
-    drawCylinderSide(kBinBaseRadius, kBinOuterRadius,
-                     kBinBottomY, kBinTopY,
-                     0.34f, 0.37f, 0.40f, TEX_METAL, 4.0f, true);
+    if (dustbinTexture != 0) {
+        drawExternalCylinderSide(kBinBaseRadius, kBinOuterRadius,
+                                 kBinBottomY, kBinTopY,
+                                 1.0f, 1.0f, 1.0f, dustbinTexture, 2.8f, true);
+    } else {
+        drawCylinderSide(kBinBaseRadius, kBinOuterRadius,
+                         kBinBottomY, kBinTopY,
+                         0.34f, 0.37f, 0.40f, TEX_METAL, 4.0f, true);
+    }
     drawCylinderSide(0.15f, kBinInnerRadius,
                      kLinerBottomY, kLinerTopY,
                      0.08f, 0.09f, 0.10f, TEX_PLASTIC, 4.8f, false);
     drawDisc(0.15f, kLinerBottomY, 0.07f, 0.08f, 0.09f, TEX_PLASTIC, 2.6f, true);
     drawTopRim();
-    drawPedal();
+    if (dustbinTexture != 0) {
+        drawExternalTexturedBox(4.44f, 0.03f, 4.78f, 4.62f, 0.07f, 4.86f,
+                                1.0f, 1.0f, 1.0f, dustbinTexture, 1.8f);
+        drawExternalTexturedBox(4.47f, 0.07f, 4.80f, 4.59f, 0.105f, 4.84f,
+                                1.0f, 1.0f, 1.0f, dustbinTexture, 1.8f);
+    } else {
+        drawPedal();
+    }
     drawLoosePapers();
     drawPaperClue();
 }

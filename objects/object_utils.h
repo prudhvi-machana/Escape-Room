@@ -8,6 +8,11 @@ void drawBox(float x1, float y1, float z1,
              float r, float g, float b,
              TextureId texture = TEX_GENERIC,
              float textureScale = 1.0f);
+void drawExternalTexturedBox(float x1, float y1, float z1,
+                             float x2, float y2, float z2,
+                             float r, float g, float b,
+                             unsigned int textureId,
+                             float textureScale = 1.0f);
 
 void drawFloorShadowAABB(float minX, float maxX,
                          float minZ, float maxZ,
