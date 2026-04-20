@@ -326,6 +326,7 @@ void drawLightSwitch() {
 void drawRoomTrim() {
     const float trimH = 0.14f;
     const float crownY = 3.82f;
+    const float crownDepth = 0.18f;
 
     // ── Floor-level skirting boards (all four walls, full run) ────────────
     drawBox(-kRoomHalf, 0.0f, -kRoomHalf, kRoomHalf, trimH, -kRoomHalf + 0.12f,
@@ -338,15 +339,15 @@ void drawRoomTrim() {
             0.42f, 0.26f, 0.13f, TEX_WOOD_DARK, 1.8f);
 
     // ── Crown moulding — back wall ─────────────────────────────────────────
-    drawBox(-kRoomHalf, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, -kRoomHalf + 0.18f,
+    drawBox(-kRoomHalf, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, -kRoomHalf + crownDepth,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // ── Crown moulding — left wall ─────────────────────────────────────────
-    drawBox(-kRoomHalf, crownY, -kRoomHalf, -kRoomHalf + 0.18f, kRoomHeight, kRoomHalf,
+    drawBox(-kRoomHalf, crownY, -kRoomHalf, -kRoomHalf + crownDepth, kRoomHeight, kRoomHalf,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // ── Crown moulding — right wall ────────────────────────────────────────
-    drawBox(kRoomHalf - 0.18f, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, kRoomHalf,
+    drawBox(kRoomHalf - crownDepth, crownY, -kRoomHalf, kRoomHalf, kRoomHeight, kRoomHalf,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // ── Crown moulding — front (door) wall ────────────────────────────────
@@ -355,15 +356,15 @@ void drawRoomTrim() {
     // We match those same X extents so the trim sits flush against the wall.
 
     // Left segment: full height wall from X=-5 to X=-1
-    drawBox(-kRoomHalf, crownY, kFrontWallInnerZ, -1.0f, kRoomHeight, kFrontWallOuterZ,
+    drawBox(-kRoomHalf, crownY, kFrontWallInnerZ - crownDepth, -1.0f, kRoomHeight, kFrontWallInnerZ,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // Right segment: full height wall from X=+1 to X=+5
-    drawBox(1.0f, crownY, kFrontWallInnerZ, kRoomHalf, kRoomHeight, kFrontWallOuterZ,
+    drawBox(1.0f, crownY, kFrontWallInnerZ - crownDepth, kRoomHalf, kRoomHeight, kFrontWallInnerZ,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // Above-door segment: wall from X=-1 to X=+1, above Y=2.5
-    drawBox(-1.0f, crownY, kFrontWallInnerZ, 1.0f, kRoomHeight, kFrontWallOuterZ,
+    drawBox(-1.0f, crownY, kFrontWallInnerZ - crownDepth, 1.0f, kRoomHeight, kFrontWallInnerZ,
             0.56f, 0.39f, 0.20f, TEX_WOOD, 2.0f);
 
     // Also add the front-side face of the crown on the front wall so it is
