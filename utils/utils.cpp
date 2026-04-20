@@ -184,8 +184,8 @@ void drawCodeBoxOverlay(int winW, int winH) {
                      entered, 0.98f, 0.83f, 0.26f);
 
     const std::string footer = codeBoxUnlocked
-        ? "Press any key or click to return."
-        : "Letters only. Backspace deletes.";
+        ? "Press any key, click, or Esc to return."
+        : "Letters only. Backspace deletes. Esc closes.";
     drawBitmapString(panelLeft + 28, panelBottom + 28, GLUT_BITMAP_HELVETICA_12,
                      footer, 0.76f, 0.77f, 0.82f);
 
@@ -652,6 +652,11 @@ void hideCodeBoxOverlay() {
 bool handleCodeBoxKeypress(unsigned char key) {
     if (!codeBoxOverlayActive) {
         return false;
+    }
+
+    if (key == 27) {
+        hideCodeBoxOverlay();
+        return true;
     }
 
     if (key == 13 || key == '\r' || key == '\n') {
