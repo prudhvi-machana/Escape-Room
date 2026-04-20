@@ -9,6 +9,8 @@ static const float DEG2RAD     = PI / 180.0f;
 static const float MOVE_SPEED  = 0.15f;
 static const float LOOK_SENS   = 0.15f;
 static const float PITCH_LIMIT = 89.0f;
+static const float INDOOR_SIDE_LIMIT = 4.60f;
+static const float INDOOR_BACK_LIMIT = -4.60f;
 static const float INDOOR_FRONT_LIMIT = 4.60f;
 static const float PLAYER_RADIUS = 0.22f;
 static const float CHEST_MIN_X = 3.18f;
@@ -16,6 +18,12 @@ static const float CHEST_MAX_X = 4.58f;
 static const float CHEST_MIN_Z = 0.92f;
 static const float CHEST_MAX_Z = 2.28f;
 static const float CHEST_BLOCK_OPEN_PROGRESS = 0.72f;
+static const float FRONT_WALL_MIN_Z = 4.82f;
+static const float FRONT_WALL_MAX_Z = 5.0f;
+static const float LEFT_FRONT_WALL_MIN_X = -5.0f;
+static const float LEFT_FRONT_WALL_MAX_X = -1.0f;
+static const float RIGHT_FRONT_WALL_MIN_X = 1.0f;
+static const float RIGHT_FRONT_WALL_MAX_X = 5.0f;
 
 float camX = 0.0f, camY = 1.0f, camZ = 0.0f;
 float angleY = 180.0f;
@@ -63,17 +71,17 @@ void pushOutOfAABB(float prevX, float prevZ,
 }
 
 void clampToRoom(float& x, float& y, float& z) {
-    if (z < -4.75f) z = -4.75f;
+    if (z < INDOOR_BACK_LIMIT) z = INDOOR_BACK_LIMIT;
 
     Item* door = getItemByName("Door");
     const bool doorOpen = door && door->pickedUp;
     if (!doorOpen) {
-        if (x < -4.75f) x = -4.75f;
-        if (x >  4.75f) x =  4.75f;
+        if (x < -INDOOR_SIDE_LIMIT) x = -INDOOR_SIDE_LIMIT;
+        if (x >  INDOOR_SIDE_LIMIT) x =  INDOOR_SIDE_LIMIT;
         if (z > INDOOR_FRONT_LIMIT) z = INDOOR_FRONT_LIMIT;
     } else if (z <= INDOOR_FRONT_LIMIT) {
-        if (x < -4.75f) x = -4.75f;
-        if (x >  4.75f) x =  4.75f;
+        if (x < -INDOOR_SIDE_LIMIT) x = -INDOOR_SIDE_LIMIT;
+        if (x >  INDOOR_SIDE_LIMIT) x =  INDOOR_SIDE_LIMIT;
     } else {
         if (z < 5.15f && (x < -1.0f || x > 1.0f)) {
             z = INDOOR_FRONT_LIMIT;
@@ -94,6 +102,22 @@ void moveCamera(float dx, float dy, float dz) {
     float nextY = camY + dy;
     float nextZ = camZ + dz;
     clampToRoom(nextX, nextY, nextZ);
+
+    Item* door = getItemByName("Door");
+    const bool doorOpen = door && door->pickedUp;
+    if (doorOpen) {
+        pushOutOfAABB(
+            prevX, prevZ, nextX, nextZ,
+            LEFT_FRONT_WALL_MIN_X, LEFT_FRONT_WALL_MAX_X,
+            FRONT_WALL_MIN_Z, FRONT_WALL_MAX_Z
+        );
+        pushOutOfAABB(
+            prevX, prevZ, nextX, nextZ,
+            RIGHT_FRONT_WALL_MIN_X, RIGHT_FRONT_WALL_MAX_X,
+            FRONT_WALL_MIN_Z, FRONT_WALL_MAX_Z
+        );
+    }
+
     if (!codeBoxUnlocked || codeBoxOpenProgress < CHEST_BLOCK_OPEN_PROGRESS) {
         pushOutOfAABB(prevX, prevZ, nextX, nextZ, CHEST_MIN_X, CHEST_MAX_X, CHEST_MIN_Z, CHEST_MAX_Z);
     }
